@@ -56,6 +56,47 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
+@app.route('/demo')
+def demo_dashboard():
+    """Demo route to showcase the UI without authentication"""
+    # Create demo data for showcase
+    demo_files = [
+        {'id': 1, 'original_filename': 'project-notes.md', 'file_type': 'text', 'file_size': 2048, 'updated_at': datetime.now(), 'uploader': {'display_name': 'Demo User'}},
+        {'id': 2, 'original_filename': 'team-photo.jpg', 'file_type': 'image', 'file_size': 1024000, 'updated_at': datetime.now(), 'uploader': {'display_name': 'Demo User'}},
+        {'id': 3, 'original_filename': 'presentation.pdf', 'file_type': 'document', 'file_size': 512000, 'updated_at': datetime.now(), 'uploader': {'display_name': 'Demo User'}}
+    ]
+    
+    demo_messages = [
+        {'id': 1, 'content': 'Welcome to File Drive! This is a demo of our collaboration platform.', 'created_at': datetime.now(), 'sender': {'display_name': 'Demo User', 'profile_image_url': None}},
+        {'id': 2, 'content': 'You can upload files, chat with team members, and collaborate in real-time.', 'created_at': datetime.now(), 'sender': {'display_name': 'Team Lead', 'profile_image_url': None}}
+    ]
+    
+    demo_activities = [
+        {'id': 1, 'description': 'Demo User uploaded project-notes.md', 'created_at': datetime.now()},
+        {'id': 2, 'description': 'Team Lead sent a message in the chat', 'created_at': datetime.now()}
+    ]
+    
+    demo_team_members = [
+        ({'id': '1', 'display_name': 'Demo User', 'profile_image_url': None}, 'admin'),
+        ({'id': '2', 'display_name': 'Team Lead', 'profile_image_url': None}, 'editor'),
+        ({'id': '3', 'display_name': 'Collaborator', 'profile_image_url': None}, 'viewer')
+    ]
+    
+    demo_team = {
+        'id': 1,
+        'name': 'Demo Team',
+        'description': 'A demonstration team showcasing File Drive features',
+        'invite_code': 'DEMO123'
+    }
+    
+    return render_template('dashboard.html',
+                         user_teams=[demo_team],
+                         current_team=demo_team,
+                         recent_files=demo_files,
+                         team_messages=demo_messages,
+                         team_activities=demo_activities,
+                         team_members=demo_team_members)
+
 @app.route('/dashboard')
 @require_login
 def dashboard():

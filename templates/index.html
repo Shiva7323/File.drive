@@ -40,11 +40,16 @@
                     </div>
                     
                     <div class="cta-section">
-                        <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
-                            <i class="fas fa-rocket me-2"></i>Get Started
-                        </a>
+                        <div class="d-grid gap-3 d-md-flex justify-content-center">
+                            <a href="{{ url_for('demo_dashboard') }}" class="btn btn-outline-primary btn-lg px-5 py-3 rounded-pill">
+                                <i class="fas fa-eye me-2"></i>View Demo
+                            </a>
+                            <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+                                <i class="fas fa-rocket me-2"></i>Get Started
+                            </a>
+                        </div>
                         <p class="text-muted mt-3 small">
-                            Sign in to access your files and teams
+                            Try the demo or sign in to access your files and teams
                         </p>
                     </div>
                 </div>
