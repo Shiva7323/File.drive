@@ -8,6 +8,7 @@ from flask import session, render_template, request, redirect, url_for, flash, s
 from flask_login import login_user, logout_user
 from flask_login import current_user
 from sqlalchemy import or_
+from s3_storage import upload_to_s3, delete_from_s3, get_download_url, s3_storage
 
 from app import app, db
 from replit_auth import require_login, make_replit_blueprint
@@ -164,6 +165,105 @@ def logout():
     logout_user()
     flash('You have been logged out successfully', 'success')
     return redirect(url_for('index'))
+
+# Enhanced File Editor Routes
+@app.route('/edit/<int:file_id>')
+@require_login
+def edit_file(file_id):
+    """Enhanced file editor with syntax highlighting and real-time features"""
+    file = File.query.get_or_404(file_id)
+    
+    # Check team membership
+    membership = TeamMember.query.filter(
+        TeamMember.team_id == file.team_id,
+        TeamMember.user_id == current_user.id
+    ).first()
+    
+    if not membership:
+        flash('You do not have access to this file.', 'error')
+        return redirect(url_for('files'))
+    
+    if membership.role == 'viewer':
+        flash('You do not have permission to edit this file.', 'error')
+        return redirect(url_for('files'))
+    
+    # Check if file is text-editable
+    if file.file_type not in ['text', 'document'] or file.original_filename.split('.')[-1].lower() not in ['txt', 'md', 'py', 'js', 'html', 'css', 'json', 'xml']:
+        flash('This file type cannot be edited online.', 'error')
+        return redirect(url_for('files'))
+    
+    # Get file content
+    file_content = ''
+    try:
+        if file.storage_type == 's3' and file.s3_key:
+            # Get content from S3
+            if s3_storage.is_configured():
+                # For now, we'll ask user to download and re-upload for S3 files
+                flash('S3 files cannot be edited directly yet. Please download and re-upload.', 'info')
+                return redirect(url_for('files'))
+        else:
+            # Get content from local file
+            with open(file.file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                file_content = f.read()
+    except Exception as e:
+        flash(f'Error reading file: {str(e)}', 'error')
+        return redirect(url_for('files'))
+    
+    return render_template('editor.html', file=file, file_content=file_content)
+
+@app.route('/edit/<int:file_id>', methods=['POST'])
+@require_login
+def save_file_edit(file_id):
+    """Save edited file content"""
+    file = File.query.get_or_404(file_id)
+    
+    # Check permissions
+    membership = TeamMember.query.filter(
+        TeamMember.team_id == file.team_id,
+        TeamMember.user_id == current_user.id
+    ).first()
+    
+    if not membership or membership.role == 'viewer':
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    content = request.form.get('content', '')
+    
+    try:
+        if file.storage_type == 'local':
+            # Save to local file
+            with open(file.file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            # Update file metadata
+            file.updated_at = datetime.now()
+            file.version += 1
+            
+            # Create file version record
+            version = FileVersion(
+                file_id=file.id,
+                version_number=file.version,
+                content=content,
+                created_by=current_user.id
+            )
+            db.session.add(version)
+            db.session.commit()
+            
+            # Log activity
+            log_activity(
+                file.team_id, 
+                current_user.id, 
+                'file_edit', 
+                'file', 
+                file.id, 
+                f"Updated {file.original_filename}"
+            )
+            
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'S3 files cannot be edited yet'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/dashboard')
 @require_login
@@ -445,16 +545,34 @@ def upload_file():
             file_extension = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
             unique_filename = f"{file_id}.{file_extension}" if file_extension else file_id
             
-            # Create team directory if it doesn't exist
-            team_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_team_id))
-            os.makedirs(team_upload_dir, exist_ok=True)
-            
-            file_path = os.path.join(team_upload_dir, unique_filename)
+            file_type = get_file_type(original_filename)
+            storage_type = 'local'
+            s3_key = None
+            file_path = None
             
             try:
-                file.save(file_path)
-                file_size = os.path.getsize(file_path)
-                file_type = get_file_type(original_filename)
+                # Try S3 upload first if configured
+                if s3_storage.is_configured():
+                    file.seek(0)  # Reset file pointer
+                    s3_key, file_url = upload_to_s3(file, current_team_id, original_filename)
+                    if s3_key:
+                        storage_type = 's3'
+                        file_path = file_url
+                        file.seek(0, 2)  # Seek to end for size
+                        file_size = file.tell()
+                    else:
+                        # S3 failed, fall back to local
+                        file.seek(0)
+                        
+                # Local storage fallback or primary
+                if not s3_key:
+                    # Create team directory if it doesn't exist
+                    team_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_team_id))
+                    os.makedirs(team_upload_dir, exist_ok=True)
+                    
+                    file_path = os.path.join(team_upload_dir, unique_filename)
+                    file.save(file_path)
+                    file_size = os.path.getsize(file_path)
                 
                 # Create file record
                 new_file = File(
@@ -464,6 +582,8 @@ def upload_file():
                     file_size=file_size,
                     file_type=file_type,
                     mime_type=file.content_type or 'application/octet-stream',
+                    storage_type=storage_type,
+                    s3_key=s3_key,
                     team_id=current_team_id,
                     folder_id=folder_id,
                     uploaded_by=current_user.id

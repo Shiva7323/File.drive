@@ -47,7 +47,7 @@
                                         </div>
                                     </div>
                                     <div class="message-content">
-                                        <p class="mb-0">{{ message.content|nl2br }}</p>
+                                        <p class="mb-0">{{ message.content|replace('\n', '<br>')|safe }}</p>
                                     </div>
                                 </div>
                             {% endfor %}

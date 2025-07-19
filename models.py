@@ -121,10 +121,12 @@ class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(255), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
-    file_path = db.Column(db.String(500), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)  # Local path or S3 key
     file_size = db.Column(db.Integer, nullable=False)
     file_type = db.Column(db.String(50), nullable=False)
     mime_type = db.Column(db.String(100), nullable=False)
+    storage_type = db.Column(db.String(20), default='local')  # 'local' or 's3'
+    s3_key = db.Column(db.String(500), nullable=True)  # S3 object key
     
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
     folder_id = db.Column(db.Integer, db.ForeignKey('folders.id'), nullable=True)
