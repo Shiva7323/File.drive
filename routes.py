@@ -668,7 +668,7 @@ def view_file(file_id):
 
 @app.route('/file/<int:file_id>/edit', methods=['GET', 'POST'])
 @require_login
-def edit_file(file_id):
+def edit_file_simple(file_id):
     file = File.query.get_or_404(file_id)
     
     # Check team membership and permissions
