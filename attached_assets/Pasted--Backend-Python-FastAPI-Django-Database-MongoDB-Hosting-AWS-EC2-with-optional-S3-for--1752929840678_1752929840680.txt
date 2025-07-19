@@ -1,0 +1,154 @@
+🔧 Backend: Python (FastAPI / Django)
+🗃 Database: MongoDB
+☁ Hosting: AWS EC2 (with optional S3 for images/files)
+🎨 Frontend: Modern, responsive UI with animations and themes (using TailwindCSS or similar)
+
+
+---
+
+📂 Project Name: File Drive
+
+A modern, secure, and collaborative file management and communication platform for teams and individuals.
+
+
+---
+
+🎯 Core Features:
+
+🔐 User Authentication
+
+Register with phone number or email
+
+OTP verification for login & signup
+
+Unique verification if user exists
+
+Forgot password with secure OTP reset
+
+JWT-based session handling for security
+
+Google/GitHub OAuth login (optional)
+
+
+🎨 User Interface (High Quality & Interactive)
+
+Fully responsive layout (mobile/tablet/desktop)
+
+Toggle for Dark Mode & Light Mode
+
+Smooth UI animations (page transitions, loading shimmer, chat popups)
+
+Dashboard with:
+
+Left-side navigation bar
+
+File preview area
+
+Chat panel
+
+Activity and notifications sidebar
+
+
+Use Glassmorphism / Neumorphism / Soft shadow designs
+
+
+🧑‍🤝‍🧑 Team & Member Management
+
+Create or join a team (via invite link or access key)
+
+Role-based access: Admin, Editor, Viewer
+
+Member list with online/offline status
+
+Team switcher dropdown (if user is in multiple teams)
+
+Activity log for each team with filters (by user, date, action)
+
+
+💬 Real-time Chat System
+
+Group chat (team-wide)
+
+Private chat between members
+
+Seen/delivered status
+
+Typing indicator
+
+Image & text sharing in chat
+
+Auto-scroll and infinite scroll chat UI
+
+Emojis & reactions
+
+Attach image from gallery (optional S3-based)
+
+
+📄 File Management
+
+Upload text files (.txt, .md, .docx), images (.jpg, .png, .gif)
+
+File metadata (uploaded by, date, versioning)
+
+Preview file content (image viewer or text reader)
+
+Edit file (for text types)
+
+Delete file (soft-delete + restore from trash)
+
+Organize files into folders and tags
+
+Team members can view and collaborate
+
+
+🚀 File Page Editor
+
+Create pages with title, content, optional images
+
+Markdown support (for notes, documentation)
+
+Page can be edited, saved, deleted
+
+Version control (edit history, revert to older version)
+
+Customizable page theme per user/team (color/background/font)
+
+
+🧩 Extra Features
+
+Notifications panel (new chat messages, file uploads, changes)
+
+Search bar with autocomplete (search files, messages, users)
+
+Sorting & filtering for files (by type, date, uploader)
+
+Recycle Bin with restore & auto-delete after X days
+
+Settings page with:
+
+Profile image & bio update
+
+Change theme
+
+Security settings (password, 2FA if needed)
+
+
+Drag-and-drop file upload
+
+File sharing to external users (via secure link with expiration)
+
+Analytics (how many uploads, active users, etc.)
+
+
+
+---
+
+🔐 Security
+
+Access key / invite-only team access
+
+Token-based secure access
+
+File privacy per team
+
+Admin control to remove members or delete files
