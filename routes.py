@@ -519,8 +519,21 @@ def upload_file():
         TeamMember.user_id == current_user.id
     ).first()
     
-    if not membership or membership.role == 'viewer':
-        flash('You do not have permission to upload files.', 'error')
+    # Check file upload permissions - admin controls who can upload
+    team = Team.query.get(current_team_id)
+    can_upload = False
+    
+    if membership.role == 'admin':
+        can_upload = True
+    elif membership.role == 'editor':
+        # Check if admin allows editors to upload (default: yes)
+        can_upload = getattr(team, 'allow_editor_uploads', True)
+    else:  # viewer
+        # Check if admin allows viewers to upload (default: no)
+        can_upload = getattr(team, 'allow_viewer_uploads', False)
+    
+    if not can_upload:
+        flash('You do not have permission to upload files in this team.', 'error')
         return redirect(url_for('files'))
     
     if request.method == 'POST':
@@ -835,6 +848,109 @@ def send_message():
                 'Sent a message')
     
     return redirect(url_for('chat'))
+
+@app.route('/delete_message/<int:message_id>', methods=['POST'])
+@require_login
+def delete_message(message_id):
+    message = Message.query.get_or_404(message_id)
+    
+    # Check if user can delete this message
+    # Users can delete their own messages, admins can delete any message
+    membership = TeamMember.query.filter(
+        TeamMember.team_id == message.team_id,
+        TeamMember.user_id == current_user.id
+    ).first()
+    
+    if not membership:
+        return jsonify({'success': False, 'error': 'Access denied'})
+    
+    can_delete = (message.sender_id == current_user.id or membership.role == 'admin')
+    if not can_delete:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    # Soft delete the message
+    message.is_deleted = True
+    message.deleted_at = datetime.now()
+    db.session.commit()
+    
+    # Log activity
+    log_activity(message.team_id, 'delete_message', 'message', message.id, 
+                f'Deleted a message')
+    
+    return jsonify({'success': True})
+
+@app.route('/edit_message/<int:message_id>', methods=['POST'])
+@require_login
+def edit_message(message_id):
+    message = Message.query.get_or_404(message_id)
+    
+    # Only sender can edit their own messages within 5 minutes
+    if message.sender_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Only message sender can edit'})
+    
+    # Check if message is still editable (within 5 minutes)
+    time_diff = datetime.now() - message.created_at
+    if time_diff.total_seconds() > 300:  # 5 minutes
+        return jsonify({'success': False, 'error': 'Message can only be edited within 5 minutes'})
+    
+    new_content = request.form.get('content', '').strip()
+    if not new_content:
+        return jsonify({'success': False, 'error': 'Message cannot be empty'})
+    
+    message.content = new_content
+    message.is_edited = True
+    message.edited_at = datetime.now()
+    db.session.commit()
+    
+    return jsonify({'success': True, 'content': new_content})
+
+@app.route('/team/<int:team_id>/settings', methods=['GET', 'POST'])
+@require_login
+def team_settings(team_id):
+    team = Team.query.get_or_404(team_id)
+    
+    # Check team membership
+    membership = TeamMember.query.filter(
+        TeamMember.team_id == team_id,
+        TeamMember.user_id == current_user.id
+    ).first()
+    
+    if not membership:
+        flash('You are not a member of this team.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST' and membership.role == 'admin':
+        # Update team settings
+        team.name = request.form.get('team_name', team.name)
+        team.description = request.form.get('team_description', team.description)
+        team.allow_editor_uploads = 'allow_editor_uploads' in request.form
+        team.allow_viewer_uploads = 'allow_viewer_uploads' in request.form
+        
+        db.session.commit()
+        flash('Team settings updated successfully!', 'success')
+        return redirect(url_for('team_settings', team_id=team_id))
+    
+    # Get team statistics
+    team_members = db.session.query(User, TeamMember.role).join(
+        TeamMember, User.id == TeamMember.user_id
+    ).filter(TeamMember.team_id == team_id).all()
+    
+    team_files_count = File.query.filter(
+        File.team_id == team_id,
+        File.is_deleted == False
+    ).count()
+    
+    team_messages_count = Message.query.filter(
+        Message.team_id == team_id,
+        Message.is_deleted == False
+    ).count()
+    
+    return render_template('team_settings.html',
+                         team=team,
+                         membership=membership,
+                         team_members=team_members,
+                         team_files_count=team_files_count,
+                         team_messages_count=team_messages_count)
 
 @app.route('/settings', methods=['GET', 'POST'])
 @require_login

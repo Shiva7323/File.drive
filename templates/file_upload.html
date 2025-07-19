@@ -113,7 +113,8 @@ function showSelectedFile(file) {
     filenameSpan.textContent = file.name;
     selectedFileDiv.classList.remove('d-none');
     fileDropZone.querySelector('.drop-zone-content > i').classList.add('d-none');
-    fileDropZone.querySelector('.drop-zone-content > p').forEach(p => p.classList.add('d-none'));
+    // Convert NodeList to Array before using forEach
+    Array.from(fileDropZone.querySelectorAll('.drop-zone-content > p')).forEach(p => p.classList.add('d-none'));
 }
 
 // Upload progress

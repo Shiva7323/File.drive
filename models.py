@@ -80,6 +80,10 @@ class Team(db.Model):
     created_by = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
+    # Admin control settings for file uploads
+    allow_editor_uploads = db.Column(db.Boolean, default=True)
+    allow_viewer_uploads = db.Column(db.Boolean, default=False)
+    
     # Relationships
     creator = db.relationship('User', foreign_keys=[created_by])
     members = db.relationship('TeamMember', back_populates='team', cascade='all, delete-orphan')
@@ -168,6 +172,12 @@ class Message(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
     sender_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     reply_to_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=True)
+    
+    # Edit and deletion tracking
+    is_edited = db.Column(db.Boolean, default=False)
+    edited_at = db.Column(db.DateTime, nullable=True)
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     

@@ -2,7 +2,12 @@
 
 // Theme Management
 function initializeTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    // Check for saved theme preference first
+    const savedTheme = localStorage.getItem('theme');
+    let currentTheme = savedTheme || document.documentElement.getAttribute('data-theme') || 'light';
+    
+    // Apply the theme
+    document.documentElement.setAttribute('data-theme', currentTheme);
     updateThemeIcon(currentTheme);
 }
 
@@ -76,12 +81,17 @@ function initializeFileUpload() {
     const fileInputs = document.querySelectorAll('input[type="file"]');
     
     fileInputs.forEach(input => {
-        input.addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (files.length > 0) {
-                validateFile(files[0]);
-            }
-        });
+        // Check if this input already has our handler to prevent double popup
+        if (!input.hasAttribute('data-upload-initialized')) {
+            input.setAttribute('data-upload-initialized', 'true');
+            
+            input.addEventListener('change', function(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    validateFile(files[0]);
+                }
+            });
+        }
     });
 }
 

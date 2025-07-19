@@ -27,7 +27,10 @@
                     <div class="chat-messages" id="chatMessages">
                         {% if messages %}
                             {% for message in messages %}
-                                <div class="message-item {% if message.sender_id == current_user.id %}own-message{% endif %}">
+                                {% if not message.is_deleted %}
+                                <div class="message-item {% if message.sender_id == current_user.id %}own-message{% endif %}" 
+                                     data-message-id="{{ message.id }}"
+                                     oncontextmenu="showMessageMenu(event, {{ message.id }}, {{ message.sender_id }}, '{{ message.sender_id == current_user.id }}', '{{ membership.role }}')">
                                     <div class="message-header">
                                         <div class="d-flex align-items-center">
                                             {% if message.sender.profile_image_url %}
@@ -42,14 +45,48 @@
                                             {% endif %}
                                             <div class="flex-grow-1">
                                                 <h6 class="mb-0">{{ message.sender.display_name }}</h6>
-                                                <small class="text-muted">{{ message.created_at.strftime('%b %d, %Y at %H:%M') }}</small>
+                                                <small class="text-muted">
+                                                    {{ message.created_at.strftime('%b %d, %Y at %H:%M') }}
+                                                    {% if message.is_edited %}
+                                                        <span class="text-muted ms-1">(edited)</span>
+                                                    {% endif %}
+                                                </small>
                                             </div>
+                                            <!-- Message Options Dropdown -->
+                                            {% if message.sender_id == current_user.id or membership.role == 'admin' %}
+                                            <div class="dropdown message-options">
+                                                <button class="btn btn-sm btn-link text-muted" type="button" 
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    {% if message.sender_id == current_user.id %}
+                                                        {% set time_diff = (message.created_at - message.created_at).total_seconds() %}
+                                                        <li><a class="dropdown-item" href="#" onclick="editMessage({{ message.id }})">
+                                                            <i class="fas fa-edit me-2"></i>Edit
+                                                        </a></li>
+                                                    {% endif %}
+                                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteMessage({{ message.id }})">
+                                                        <i class="fas fa-trash me-2"></i>Delete
+                                                    </a></li>
+                                                </ul>
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
-                                    <div class="message-content">
+                                    <div class="message-content" id="message-content-{{ message.id }}">
                                         <p class="mb-0">{{ message.content|replace('\n', '<br>')|safe }}</p>
                                     </div>
+                                    <!-- Edit Form (hidden by default) -->
+                                    <div class="message-edit-form d-none" id="edit-form-{{ message.id }}">
+                                        <textarea class="form-control mb-2" id="edit-textarea-{{ message.id }}">{{ message.content }}</textarea>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-primary" onclick="saveEdit({{ message.id }})">Save</button>
+                                            <button class="btn btn-sm btn-secondary" onclick="cancelEdit({{ message.id }})">Cancel</button>
+                                        </div>
+                                    </div>
                                 </div>
+                                {% endif %}
                             {% endfor %}
                         {% else %}
                             <div class="empty-chat">
@@ -260,6 +297,129 @@ function showNewMessageNotification() {
     setTimeout(() => {
         notification.remove();
     }, 5000);
+}
+
+// WhatsApp-style message management
+function deleteMessage(messageId) {
+    if (confirm('Delete this message? This action cannot be undone.')) {
+        fetch(`/delete_message/${messageId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove message from UI with animation
+                const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageElement) {
+                    messageElement.style.transition = 'opacity 0.3s ease-out';
+                    messageElement.style.opacity = '0';
+                    setTimeout(() => {
+                        messageElement.remove();
+                    }, 300);
+                }
+                showNotification('Message deleted successfully', 'success');
+            } else {
+                showNotification(data.error || 'Failed to delete message', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error deleting message', 'danger');
+        });
+    }
+}
+
+function editMessage(messageId) {
+    const contentDiv = document.getElementById(`message-content-${messageId}`);
+    const editForm = document.getElementById(`edit-form-${messageId}`);
+    
+    contentDiv.classList.add('d-none');
+    editForm.classList.remove('d-none');
+    
+    // Focus on textarea
+    const textarea = document.getElementById(`edit-textarea-${messageId}`);
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+function cancelEdit(messageId) {
+    const contentDiv = document.getElementById(`message-content-${messageId}`);
+    const editForm = document.getElementById(`edit-form-${messageId}`);
+    
+    contentDiv.classList.remove('d-none');
+    editForm.classList.add('d-none');
+}
+
+function saveEdit(messageId) {
+    const textarea = document.getElementById(`edit-textarea-${messageId}`);
+    const newContent = textarea.value.trim();
+    
+    if (!newContent) {
+        showNotification('Message cannot be empty', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('content', newContent);
+    
+    fetch(`/edit_message/${messageId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update message content in UI
+            const contentDiv = document.getElementById(`message-content-${messageId}`);
+            const editForm = document.getElementById(`edit-form-${messageId}`);
+            
+            contentDiv.innerHTML = `<p class="mb-0">${data.content.replace(/\n/g, '<br>')}</p>`;
+            contentDiv.classList.remove('d-none');
+            editForm.classList.add('d-none');
+            
+            showNotification('Message updated successfully', 'success');
+        } else {
+            showNotification(data.error || 'Failed to edit message', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error editing message', 'danger');
+    });
+}
+
+// Show notification helper function (if not already available)
+function showNotification(message, type, duration = 3000) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, duration);
 }
 </script>
 

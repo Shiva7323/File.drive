@@ -129,3 +129,35 @@ Key models include:
 - **OAuth Integration**: Replit-managed authentication
 
 The application follows a traditional MVC pattern with Flask, providing a solid foundation for team collaboration while maintaining security and scalability considerations.
+
+## Recent Changes (July 19, 2025)
+
+### WhatsApp-Style Chat Improvements
+✓ Added message deletion functionality (users can delete own messages, admins can delete any)
+✓ Added message editing with 5-minute time limit for senders
+✓ Added visual indicators for edited messages
+✓ Implemented smooth animations for message deletion
+✓ Added dropdown menus for message options
+
+### Admin File Upload Controls
+✓ Added team-level settings for controlling upload permissions
+✓ Admins can now control whether editors and viewers can upload files
+✓ Created team settings page with permission management
+✓ Added upload permission checks in backend logic
+
+### UI/UX Fixes
+✓ Fixed JavaScript forEach error in file upload template
+✓ Prevented double file dialog popups by adding initialization checks
+✓ Fixed theme auto-switching by prioritizing localStorage preferences
+✓ Improved file drag-and-drop functionality
+
+### Database Schema Updates
+✓ Added `is_edited`, `edited_at`, `is_deleted`, `deleted_at` fields to Message model
+✓ Added `allow_editor_uploads`, `allow_viewer_uploads` fields to Team model
+✓ Maintained backward compatibility with existing data
+
+### Security Enhancements
+✓ Role-based permission checks for all message operations
+✓ Time-limited editing window for messages
+✓ Granular upload permissions controlled by team admins
+✓ Soft deletion system preserving data integrity

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Team Settings - {{ team.name }} - File Drive{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-cog me-2"></i>Team Settings - {{ team.name }}
+                    </h3>
+                    <p class="text-muted mb-0">Manage team permissions and settings</p>
+                </div>
+                
+                <div class="card-body">
+                    {% if membership.role != 'admin' %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Only team administrators can modify these settings.
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('team_settings', team_id=team.id) }}">
+                        <!-- Basic Team Info -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Team Information
+                            </h5>
+                            <div class="mb-3">
+                                <label for="team_name" class="form-label">Team Name</label>
+                                <input type="text" class="form-control glass-input" id="team_name" 
+                                       name="team_name" value="{{ team.name }}" 
+                                       {% if membership.role != 'admin' %}readonly{% endif %}>
+                            </div>
+                            <div class="mb-3">
+                                <label for="team_description" class="form-label">Description</label>
+                                <textarea class="form-control glass-input" id="team_description" 
+                                          name="team_description" rows="3" 
+                                          {% if membership.role != 'admin' %}readonly{% endif %}>{{ team.description or '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Invite Code</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control glass-input" 
+                                           value="{{ team.invite_code }}" readonly id="inviteCode">
+                                    <button class="btn btn-outline-primary" type="button" 
+                                            onclick="copyInviteCode()">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Share this code with others to join the team</small>
+                            </div>
+                        </div>
+
+                        <!-- Upload Permissions -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-upload me-2"></i>File Upload Permissions
+                            </h5>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Control who can upload files to this team. Admins can always upload files.
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="allow_editor_uploads" name="allow_editor_uploads" 
+                                           {% if team.allow_editor_uploads %}checked{% endif %}
+                                           {% if membership.role != 'admin' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="allow_editor_uploads">
+                                        <strong>Allow Editors to Upload Files</strong>
+                                        <br><small class="text-muted">Editors can upload and manage files</small>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="allow_viewer_uploads" name="allow_viewer_uploads" 
+                                           {% if team.allow_viewer_uploads %}checked{% endif %}
+                                           {% if membership.role != 'admin' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="allow_viewer_uploads">
+                                        <strong>Allow Viewers to Upload Files</strong>
+                                        <br><small class="text-muted">Viewers can upload files (not recommended for sensitive teams)</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Team Stats -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-chart-bar me-2"></i>Team Statistics
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="stat-card glass-card p-3 text-center">
+                                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                        <h4>{{ team_members|length }}</h4>
+                                        <small class="text-muted">Members</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card glass-card p-3 text-center">
+                                        <i class="fas fa-file fa-2x text-success mb-2"></i>
+                                        <h4>{{ team_files_count }}</h4>
+                                        <small class="text-muted">Files</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card glass-card p-3 text-center">
+                                        <i class="fas fa-comments fa-2x text-info mb-2"></i>
+                                        <h4>{{ team_messages_count }}</h4>
+                                        <small class="text-muted">Messages</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if membership.role == 'admin' %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Settings
+                                </button>
+                            </div>
+                        {% endif %}
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Danger Zone -->
+                    {% if membership.role == 'admin' %}
+                        <div class="danger-zone">
+                            <h5 class="text-danger mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+                            </h5>
+                            <div class="alert alert-danger">
+                                <strong>Warning:</strong> These actions cannot be undone.
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="clearTeamChat({{ team.id }})">
+                                    <i class="fas fa-broom me-2"></i>Clear All Team Messages
+                                </button>
+                                <button type="button" class="btn btn-danger" 
+                                        onclick="deleteTeam({{ team.id }})">
+                                    <i class="fas fa-trash me-2"></i>Delete Team
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyInviteCode() {
+    const inviteCode = document.getElementById('inviteCode');
+    inviteCode.select();
+    document.execCommand('copy');
+    showNotification('Invite code copied to clipboard!', 'success');
+}
+
+function clearTeamChat(teamId) {
+    if (confirm('Are you sure you want to clear all team messages? This action cannot be undone.')) {
+        fetch(`/team/${teamId}/clear_chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Team chat cleared successfully', 'success');
+            } else {
+                showNotification(data.error || 'Failed to clear chat', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error clearing chat', 'danger');
+        });
+    }
+}
+
+function deleteTeam(teamId) {
+    const confirmation = prompt('Type "DELETE" to confirm team deletion:');
+    if (confirmation === 'DELETE') {
+        fetch(`/team/${teamId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Team deleted successfully', 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } else {
+                showNotification(data.error || 'Failed to delete team', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error deleting team', 'danger');
+        });
+    }
+}
+
+function showNotification(message, type, duration = 3000) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, duration);
+}
+</script>
+
+<style>
+.danger-zone {
+    border: 2px solid rgba(220, 53, 69, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.stat-card {
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+</style>
+{% endblock %}
