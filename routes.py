@@ -5,6 +5,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
 from flask import session, render_template, request, redirect, url_for, flash, send_file, jsonify, abort
+from flask_login import login_user, logout_user
 from flask_login import current_user
 from sqlalchemy import or_
 
@@ -96,6 +97,73 @@ def demo_dashboard():
                          team_messages=demo_messages,
                          team_activities=demo_activities,
                          team_members=demo_team_members)
+
+# Email Authentication Routes
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        
+        # Basic validation
+        if not email or not password:
+            flash('Email and password are required', 'error')
+            return render_template('signup.html')
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long', 'error')
+            return render_template('signup.html')
+        
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('An account with this email already exists', 'error')
+            return render_template('signup.html')
+        
+        # Create new user
+        user = User.create_email_user(email, password, first_name, last_name)
+        db.session.add(user)
+        db.session.commit()
+        
+        # Log in the user
+        login_user(user)
+        flash('Account created successfully! Welcome to File Drive.', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('signup.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def email_login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        
+        if not email or not password:
+            flash('Email and password are required', 'error')
+            return render_template('login.html')
+        
+        # Find user by email
+        user = User.query.filter_by(email=email, auth_method='email').first()
+        
+        if user and user.check_password(password):
+            login_user(user)
+            next_url = session.get('next_url')
+            if next_url:
+                session.pop('next_url', None)
+                return redirect(next_url)
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash('You have been logged out successfully', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/dashboard')
 @require_login

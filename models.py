@@ -1,18 +1,22 @@
 from datetime import datetime
+import uuid
 from app import db
 from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String, primary_key=True)
     email = db.Column(db.String, unique=True, nullable=True)
+    password_hash = db.Column(db.String(256))  # For email authentication
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
     theme_preference = db.Column(db.String, default='light')  # light or dark
+    auth_method = db.Column(db.String(20), default='replit')  # 'replit' or 'email'
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
@@ -22,6 +26,14 @@ class User(UserMixin, db.Model):
     uploaded_files = db.relationship('File', back_populates='uploader')
     messages = db.relationship('Message', back_populates='sender')
 
+    def set_password(self, password):
+        """Set password hash for email authentication"""
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check password for email authentication"""
+        return check_password_hash(self.password_hash, password) if self.password_hash else False
+    
     @property
     def display_name(self):
         if self.first_name and self.last_name:
@@ -32,6 +44,18 @@ class User(UserMixin, db.Model):
             return self.email.split('@')[0]
         else:
             return f"User {self.id[:8]}"
+    
+    @staticmethod
+    def create_email_user(email, password, first_name=None, last_name=None):
+        """Create a new user with email authentication"""
+        user = User()
+        user.id = str(uuid.uuid4())
+        user.email = email
+        user.first_name = first_name
+        user.last_name = last_name
+        user.auth_method = 'email'
+        user.set_password(password)
+        return user
 
 # (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 class OAuth(OAuthConsumerMixin, db.Model):
