@@ -29,6 +29,7 @@ class User(UserMixin, db.Model):
     def set_password(self, password):
         """Set password hash for email authentication"""
         self.password_hash = generate_password_hash(password)
+        self.auth_method = 'email'
     
     def check_password(self, password):
         """Check password for email authentication"""

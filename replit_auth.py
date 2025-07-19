@@ -150,18 +150,25 @@ def require_login(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             session["next_url"] = get_next_navigation_url(request)
-            return redirect(url_for('replit_auth.login'))
+            # Redirect to email login instead of Replit login as default
+            return redirect(url_for('email_login'))
 
-        expires_in = replit.token.get('expires_in', 0)
-        if expires_in < 0:
-            refresh_token_url = issuer_url + "/token"
+        # Only handle token refresh for Replit OAuth users
+        if hasattr(current_user, 'auth_method') and current_user.auth_method == 'replit':
             try:
-                token = replit.refresh_token(token_url=refresh_token_url, client_id=os.environ['REPL_ID'])
-            except InvalidGrantError:
-                # If the refresh token is invalid, the users needs to re-login.
-                session["next_url"] = get_next_navigation_url(request)
-                return redirect(url_for('replit_auth.login'))
-            replit.token_updater(token)
+                expires_in = replit.token.get('expires_in', 0) if replit.token else 0
+                if expires_in < 0:
+                    refresh_token_url = issuer_url + "/token"
+                    try:
+                        token = replit.refresh_token(token_url=refresh_token_url, client_id=os.environ['REPL_ID'])
+                    except InvalidGrantError:
+                        # If the refresh token is invalid, the user needs to re-login.
+                        session["next_url"] = get_next_navigation_url(request)
+                        return redirect(url_for('replit_auth.login'))
+                    replit.token_updater(token)
+            except (AttributeError, TypeError):
+                # If there's an issue with the Replit token, continue anyway
+                pass
 
         return f(*args, **kwargs)
 
