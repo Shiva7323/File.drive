@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to File Drive{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-lg-8 col-xl-6 text-center">
+                <div class="glass-card landing-card p-5">
+                    <div class="mb-5">
+                        <i class="fas fa-cloud landing-icon mb-4"></i>
+                        <h1 class="display-4 fw-bold mb-3 gradient-text">File Drive</h1>
+                        <p class="lead mb-4">
+                            A modern, secure, and collaborative file management platform for teams and individuals.
+                        </p>
+                    </div>
+                    
+                    <div class="features-grid mb-5">
+                        <div class="feature-item">
+                            <i class="fas fa-users"></i>
+                            <h5>Team Collaboration</h5>
+                            <p>Work together with your team members in real-time</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-comments"></i>
+                            <h5>Integrated Chat</h5>
+                            <p>Stay connected with built-in messaging</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <h5>Secure & Private</h5>
+                            <p>Your files are protected with enterprise-grade security</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-edit"></i>
+                            <h5>File Editing</h5>
+                            <p>Edit text files directly in your browser</p>
+                        </div>
+                    </div>
+                    
+                    <div class="cta-section">
+                        <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+                            <i class="fas fa-rocket me-2"></i>Get Started
+                        </a>
+                        <p class="text-muted mt-3 small">
+                            Sign in to access your files and teams
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="floating-elements">
+                    <div class="floating-element float-1"><i class="fas fa-file-alt"></i></div>
+                    <div class="floating-element float-2"><i class="fas fa-folder"></i></div>
+                    <div class="floating-element float-3"><i class="fas fa-image"></i></div>
+                    <div class="floating-element float-4"><i class="fas fa-code"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

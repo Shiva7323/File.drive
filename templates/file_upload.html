@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Upload File - File Drive{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card">
+                <div class="card-header text-center">
+                    <i class="fas fa-upload display-4 text-primary mb-3"></i>
+                    <h3>Upload File</h3>
+                    <p class="text-muted">Share files with your team</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-4">
+                            <label for="folder_id" class="form-label">
+                                <i class="fas fa-folder me-2"></i>Destination Folder
+                            </label>
+                            <select class="form-select glass-input" id="folder_id" name="folder_id">
+                                <option value="">Root Directory</option>
+                                {% for folder in folders %}
+                                    <option value="{{ folder.id }}" {% if current_folder_id == folder.id %}selected{% endif %}>
+                                        {{ folder.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="file" class="form-label">
+                                <i class="fas fa-file me-2"></i>Select File *
+                            </label>
+                            <div class="file-drop-zone" id="fileDropZone">
+                                <input type="file" class="form-control" id="file" name="file" required
+                                       accept=".txt,.md,.docx,.jpg,.jpeg,.png,.gif,.pdf,.svg">
+                                <div class="drop-zone-content">
+                                    <i class="fas fa-cloud-upload-alt display-4 text-muted mb-3"></i>
+                                    <p class="mb-2">Drag and drop your file here</p>
+                                    <p class="text-muted small mb-3">or click to browse</p>
+                                    <div class="selected-file d-none">
+                                        <i class="fas fa-file me-2"></i>
+                                        <span class="filename"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info glass-alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Supported formats:</strong> Text files (.txt, .md), Documents (.docx, .pdf), Images (.jpg, .jpeg, .png, .gif, .svg)
+                            <br>
+                            <strong>Maximum file size:</strong> 16 MB
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                                <i class="fas fa-upload me-2"></i>Upload File
+                            </button>
+                            <a href="{{ url_for('files') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Files
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// File drop zone functionality
+const fileDropZone = document.getElementById('fileDropZone');
+const fileInput = document.getElementById('file');
+const selectedFileDiv = fileDropZone.querySelector('.selected-file');
+const filenameSpan = selectedFileDiv.querySelector('.filename');
+
+fileDropZone.addEventListener('click', () => {
+    fileInput.click();
+});
+
+fileDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileDropZone.classList.add('drag-over');
+});
+
+fileDropZone.addEventListener('dragleave', () => {
+    fileDropZone.classList.remove('drag-over');
+});
+
+fileDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileDropZone.classList.remove('drag-over');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        showSelectedFile(files[0]);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        showSelectedFile(e.target.files[0]);
+    }
+});
+
+function showSelectedFile(file) {
+    filenameSpan.textContent = file.name;
+    selectedFileDiv.classList.remove('d-none');
+    fileDropZone.querySelector('.drop-zone-content > i').classList.add('d-none');
+    fileDropZone.querySelector('.drop-zone-content > p').forEach(p => p.classList.add('d-none'));
+}
+
+// Upload progress
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    const uploadBtn = document.getElementById('uploadBtn');
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    uploadBtn.disabled = true;
+});
+</script>
+{% endblock %}

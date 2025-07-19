@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ file.original_filename }} - File Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 col-xl-9">
+            <div class="glass-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-edit text-primary fa-2x me-3"></i>
+                        <div>
+                            <h4 class="mb-0">Editing: {{ file.original_filename }}</h4>
+                            <small class="text-muted">Version {{ file.version }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <a href="{{ url_for('view_file', file_id=file.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" id="editForm">
+                        <div class="mb-3">
+                            <textarea class="form-control glass-input code-editor" 
+                                      id="content" name="content" rows="25">{{ content }}</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                                <a href="{{ url_for('view_file', file_id=file.id) }}" 
+                                   class="btn btn-outline-secondary ms-2">
+                                    <i class="fas fa-eye me-2"></i>Preview
+                                </a>
+                            </div>
+                            
+                            <div class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Use Ctrl+S to save quickly
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version History Sidebar -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Version History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if versions %}
+                        <div class="version-list">
+                            {% for version in versions %}
+                                <div class="version-item mb-3 p-3 {% if loop.first %}current-version{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">
+                                                Version {{ version.version_number }}
+                                                {% if loop.first %}<span class="badge bg-primary ms-1">Current</span>{% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ version.creator.display_name }}
+                                                <br>
+                                                {{ version.created_at.strftime('%b %d, %Y at %H:%M') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% if not loop.first %}
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="loadVersion({{ version.version_number }})">
+                                                Load This Version
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-clock text-muted mb-2"></i>
+                            <p class="text-muted small">No version history available.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-keyboard me-2"></i>Keyboard Shortcuts
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="shortcut-list">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Save</span>
+                                <kbd>Ctrl+S</kbd>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Find</span>
+                                <kbd>Ctrl+F</kbd>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Replace</span>
+                                <kbd>Ctrl+H</kbd>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Select All</span>
+                                <kbd>Ctrl+A</kbd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-save functionality
+let autoSaveTimeout;
+const contentTextarea = document.getElementById('content');
+
+contentTextarea.addEventListener('input', function() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        // Show auto-save indicator
+        showAutoSaveIndicator();
+    }, 5000); // Auto-save after 5 seconds of inactivity
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('editForm').submit();
+    }
+});
+
+function showAutoSaveIndicator() {
+    // Simple visual indicator for auto-save
+    const indicator = document.createElement('div');
+    indicator.className = 'alert alert-info position-fixed top-0 end-0 m-3';
+    indicator.style.zIndex = '9999';
+    indicator.innerHTML = '<i class="fas fa-save me-2"></i>Auto-saving...';
+    document.body.appendChild(indicator);
+    
+    setTimeout(() => {
+        indicator.remove();
+    }, 2000);
+}
+
+function loadVersion(versionNumber) {
+    if (confirm('Loading this version will replace your current changes. Continue?')) {
+        // In a real implementation, this would make an AJAX request
+        // For now, we'll just show a message
+        alert('Version loading feature would be implemented here');
+    }
+}
+
+// Line numbers for code editor (simple implementation)
+const textarea = document.querySelector('.code-editor');
+textarea.addEventListener('scroll', function() {
+    // Sync line numbers with scroll (if implemented)
+});
+
+// Simple syntax highlighting for markdown files
+if ('{{ file.original_filename }}'.toLowerCase().endsWith('.md')) {
+    textarea.classList.add('markdown-editor');
+}
+</script>
+{% endblock %}

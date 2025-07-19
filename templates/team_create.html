@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Create Team - File Drive{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card">
+                <div class="card-header text-center">
+                    <i class="fas fa-users display-4 text-primary mb-3"></i>
+                    <h3>Create New Team</h3>
+                    <p class="text-muted">Start collaborating with your team members</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-team me-2"></i>Team Name *
+                            </label>
+                            <input type="text" class="form-control glass-input" id="name" name="name" required
+                                   placeholder="Enter team name">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>Description
+                            </label>
+                            <textarea class="form-control glass-input" id="description" name="description" rows="3"
+                                      placeholder="Describe your team (optional)"></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info glass-alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> You will be the team administrator and can invite other members using the generated invite code.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus me-2"></i>Create Team
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

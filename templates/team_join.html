@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Join Team - File Drive{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card">
+                <div class="card-header text-center">
+                    <i class="fas fa-sign-in-alt display-4 text-primary mb-3"></i>
+                    <h3>Join Team</h3>
+                    <p class="text-muted">Enter the invite code to join an existing team</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label for="invite_code" class="form-label">
+                                <i class="fas fa-key me-2"></i>Invite Code *
+                            </label>
+                            <input type="text" class="form-control glass-input" id="invite_code" name="invite_code" required
+                                   placeholder="Enter invite code">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Ask your team administrator for the invite code
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info glass-alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> You will join as a viewer. Team administrators can change your role later.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Join Team
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

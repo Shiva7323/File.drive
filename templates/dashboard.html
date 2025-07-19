@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - File Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-xl-2">
+            <div class="sidebar glass-card">
+                <div class="sidebar-header p-3 border-bottom">
+                    <h5 class="mb-0">Teams</h5>
+                </div>
+                
+                <!-- Team Switcher -->
+                <div class="p-3">
+                    {% if user_teams %}
+                        <div class="dropdown w-100 mb-3">
+                            <button class="btn btn-outline-primary dropdown-toggle w-100 text-start" data-bs-toggle="dropdown">
+                                <i class="fas fa-users me-2"></i>
+                                {{ current_team.name if current_team else 'Select Team' }}
+                            </button>
+                            <ul class="dropdown-menu w-100 glass-dropdown">
+                                {% for team in user_teams %}
+                                    <li>
+                                        <a class="dropdown-item {% if current_team and team.id == current_team.id %}active{% endif %}" 
+                                           href="{{ url_for('switch_team', team_id=team.id) }}">
+                                            {{ team.name }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Team Actions -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('create_team') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Create Team
+                        </a>
+                        <a href="{{ url_for('join_team') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sign-in-alt me-1"></i>Join Team
+                        </a>
+                    </div>
+                </div>
+                
+                {% if current_team %}
+                <div class="sidebar-section p-3 border-top">
+                    <h6 class="text-muted mb-3">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('files') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-folder me-1"></i>Browse Files
+                        </a>
+                        <a href="{{ url_for('upload_file') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-upload me-1"></i>Upload File
+                        </a>
+                        <a href="{{ url_for('chat') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-comments me-1"></i>Team Chat
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9 col-xl-10">
+            {% if not current_team %}
+                <div class="text-center py-5">
+                    <div class="glass-card p-5">
+                        <i class="fas fa-users display-4 text-muted mb-4"></i>
+                        <h3>Welcome to File Drive!</h3>
+                        <p class="text-muted mb-4">Create a new team or join an existing one to get started.</p>
+                        <div>
+                            <a href="{{ url_for('create_team') }}" class="btn btn-primary me-3">
+                                <i class="fas fa-plus me-2"></i>Create Team
+                            </a>
+                            <a href="{{ url_for('join_team') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>Join Team
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Dashboard Header -->
+                <div class="dashboard-header mb-4">
+                    <div class="glass-card p-4">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h2 class="mb-1">{{ current_team.name }}</h2>
+                                <p class="text-muted mb-0">{{ current_team.description or 'Team Dashboard' }}</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="badge bg-primary">
+                                    Invite Code: <strong>{{ current_team.invite_code }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+                    <!-- Recent Files -->
+                    <div class="col-lg-8">
+                        <div class="glass-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-clock me-2"></i>Recent Files
+                                </h5>
+                                <a href="{{ url_for('files') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body">
+                                {% if recent_files %}
+                                    <div class="list-group list-group-flush">
+                                        {% for file in recent_files %}
+                                            <div class="list-group-item list-group-item-action glass-item">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="file-icon me-3">
+                                                            {% if file.file_type == 'image' %}
+                                                                <i class="fas fa-image text-success"></i>
+                                                            {% elif file.file_type == 'text' %}
+                                                                <i class="fas fa-file-alt text-primary"></i>
+                                                            {% elif file.file_type == 'document' %}
+                                                                <i class="fas fa-file-pdf text-danger"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-file text-muted"></i>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0">
+                                                                <a href="{{ url_for('view_file', file_id=file.id) }}" class="text-decoration-none">
+                                                                    {{ file.original_filename }}
+                                                                </a>
+                                                            </h6>
+                                                            <small class="text-muted">
+                                                                By {{ file.uploader.display_name }} • {{ file.updated_at.strftime('%b %d, %Y') }}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        {{ "%.1f"|format(file.file_size / 1024) }} KB
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-folder-open display-4 text-muted mb-3"></i>
+                                        <p class="text-muted">No files uploaded yet.</p>
+                                        <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
+                                            <i class="fas fa-upload me-2"></i>Upload First File
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Members & Activity -->
+                    <div class="col-lg-4">
+                        <!-- Team Members -->
+                        <div class="glass-card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-users me-2"></i>Team Members ({{ team_members|length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% for user, role in team_members %}
+                                    <div class="d-flex align-items-center mb-3">
+                                        {% if user.profile_image_url %}
+                                            <img src="{{ user.profile_image_url }}" alt="{{ user.display_name }}" 
+                                                 class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="avatar-placeholder me-3">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">{{ user.display_name }}</h6>
+                                            <small class="text-muted">{{ role.title() }}</small>
+                                        </div>
+                                        <div class="online-status"></div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="glass-card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-history me-2"></i>Recent Activity
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if team_activities %}
+                                    {% for activity in team_activities %}
+                                        <div class="activity-item mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <div class="activity-icon me-3">
+                                                    {% if activity.action == 'upload_file' %}
+                                                        <i class="fas fa-upload text-success"></i>
+                                                    {% elif activity.action == 'edit_file' %}
+                                                        <i class="fas fa-edit text-primary"></i>
+                                                    {% elif activity.action == 'delete_file' %}
+                                                        <i class="fas fa-trash text-danger"></i>
+                                                    {% elif activity.action == 'join_team' %}
+                                                        <i class="fas fa-user-plus text-info"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-activity text-muted"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <p class="mb-0 small">{{ activity.description }}</p>
+                                                    <small class="text-muted">{{ activity.created_at.strftime('%b %d, %H:%M') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-clock display-6 text-muted mb-2"></i>
+                                        <p class="text-muted small">No activity yet.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Messages -->
+                {% if team_messages %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="glass-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-comments me-2"></i>Recent Messages
+                                </h5>
+                                <a href="{{ url_for('chat') }}" class="btn btn-sm btn-outline-primary">Open Chat</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="chat-preview">
+                                    {% for message in team_messages[:5] %}
+                                        <div class="message-preview mb-3">
+                                            <div class="d-flex align-items-start">
+                                                {% if message.sender.profile_image_url %}
+                                                    <img src="{{ message.sender.profile_image_url }}" alt="{{ message.sender.display_name }}" 
+                                                         class="rounded-circle me-3" style="width: 32px; height: 32px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="avatar-placeholder me-3 small">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0">{{ message.sender.display_name }}</h6>
+                                                        <small class="text-muted">{{ message.created_at.strftime('%H:%M') }}</small>
+                                                    </div>
+                                                    <p class="mb-0 text-truncate">{{ message.content }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
