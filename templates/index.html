@@ -15,7 +15,7 @@
                             A modern, secure, and collaborative file management platform for teams and individuals.
                         </p>
                     </div>
-                    
+
                     <div class="features-grid mb-5">
                         <div class="feature-item">
                             <i class="fas fa-users"></i>
@@ -38,10 +38,11 @@
                             <p>Edit text files directly in your browser</p>
                         </div>
                     </div>
-                    
+
                     <div class="cta-section">
                         <div class="d-grid gap-3 d-md-flex justify-content-center mb-3">
-                            <a href="{{ url_for('demo_dashboard') }}" class="btn btn-outline-primary btn-lg px-4 py-3 rounded-pill">
+                            <a href="{{ url_for('demo_dashboard') }}"
+                                class="btn btn-outline-primary btn-lg px-4 py-3 rounded-pill">
                                 <i class="fas fa-eye me-2"></i>View Demo
                             </a>
                             <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg px-4 py-3 rounded-pill">
@@ -50,15 +51,18 @@
                         </div>
                         <div class="text-center">
                             <p class="text-muted mb-2">
-                                Already have an account? <a href="{{ url_for('email_login') }}" class="text-decoration-none">Sign In</a>
+                                Already have an account? <a href="{{ url_for('login') }}"
+                                    class="text-decoration-none">Sign In</a>
                             </p>
                             <p class="text-muted small">
-                                Having trouble with authentication? Try our <a href="{{ url_for('demo_dashboard') }}" class="text-decoration-none">demo</a>
+                                Having trouble? Try our <a href="{{ url_for('demo_dashboard') }}"
+                                    class="text-decoration-none">demo</a> or
+                                <a href="{{ url_for('help_page') }}" class="text-decoration-none">help guide</a>
                             </p>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="floating-elements">
                     <div class="floating-element float-1"><i class="fas fa-file-alt"></i></div>
                     <div class="floating-element float-2"><i class="fas fa-folder"></i></div>

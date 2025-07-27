@@ -11,10 +11,10 @@ from sqlalchemy import or_
 from s3_storage import upload_to_s3, delete_from_s3, get_download_url, s3_storage
 
 from app import app, db
-from replit_auth import require_login, make_replit_blueprint
+from auth import require_login
 from models import User, Team, TeamMember, File, Folder, Message, Activity, FileVersion
 
-app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+
 
 # Make session permanent
 @app.before_request
@@ -99,32 +99,33 @@ def demo_dashboard():
                          team_activities=demo_activities,
                          team_members=demo_team_members)
 
-# Email Authentication Routes
+# Authentication Routes
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
+        username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        first_name = request.form.get('first_name', '').strip()
-        last_name = request.form.get('last_name', '').strip()
         
-        # Basic validation
-        if not email or not password:
-            flash('Email and password are required', 'error')
+        # Validate username
+        is_valid_username, username_error = User.validate_username(username)
+        if not is_valid_username:
+            flash(username_error, 'error')
             return render_template('signup.html')
         
-        if len(password) < 6:
-            flash('Password must be at least 6 characters long', 'error')
+        # Validate password
+        is_valid_password, password_error = User.validate_password(password)
+        if not is_valid_password:
+            flash(password_error, 'error')
             return render_template('signup.html')
         
-        # Check if user already exists
-        existing_user = User.query.filter_by(email=email).first()
+        # Check if username already exists
+        existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-            flash('An account with this email already exists', 'error')
+            flash('Username already taken. Please choose a different username.', 'error')
             return render_template('signup.html')
         
-        # Create new user
-        user = User.create_email_user(email, password, first_name, last_name)
+        # Create new user with only username and password
+        user = User.create_user(username, password, None, '', '')
         db.session.add(user)
         db.session.commit()
         
@@ -136,17 +137,17 @@ def signup():
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-def email_login():
+def login():
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
+        username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
         
-        if not email or not password:
-            flash('Email and password are required', 'error')
+        if not username or not password:
+            flash('Username and password are required', 'error')
             return render_template('login.html')
         
-        # Find user by email
-        user = User.query.filter_by(email=email, auth_method='email').first()
+        # Find user by username
+        user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
             login_user(user)
@@ -156,7 +157,7 @@ def email_login():
                 return redirect(next_url)
             return redirect(url_for('dashboard'))
         else:
-            flash('Invalid email or password', 'error')
+            flash('Invalid username or password', 'error')
     
     return render_template('login.html')
 
@@ -165,6 +166,20 @@ def logout():
     logout_user()
     flash('You have been logged out successfully', 'success')
     return redirect(url_for('index'))
+
+@app.route('/switch_mode/<mode>')
+@require_login
+def switch_mode(mode):
+    """Switch between single and team modes"""
+    if mode not in ['single', 'team']:
+        flash('Invalid mode selected', 'error')
+        return redirect(url_for('dashboard'))
+    
+    current_user.mode_preference = mode
+    db.session.commit()
+    
+    flash(f'Switched to {mode} mode', 'success')
+    return redirect(url_for('dashboard'))
 
 # Enhanced File Editor Routes
 @app.route('/edit/<int:file_id>')
@@ -183,7 +198,7 @@ def edit_file(file_id):
         flash('You do not have access to this file.', 'error')
         return redirect(url_for('files'))
     
-    if membership.role == 'viewer':
+    if membership and membership.role == 'viewer':
         flash('You do not have permission to edit this file.', 'error')
         return redirect(url_for('files'))
     
@@ -223,7 +238,7 @@ def save_file_edit(file_id):
         TeamMember.user_id == current_user.id
     ).first()
     
-    if not membership or membership.role == 'viewer':
+    if not membership or (membership and membership.role == 'viewer'):
         return jsonify({'success': False, 'error': 'Permission denied'})
     
     content = request.form.get('content', '')
@@ -268,49 +283,68 @@ def save_file_edit(file_id):
 @app.route('/dashboard')
 @require_login
 def dashboard():
-    # Get user's teams
-    user_teams = db.session.query(Team).join(TeamMember).filter(
-        TeamMember.user_id == current_user.id
-    ).all()
+    # Check user's mode preference
+    user_mode = getattr(current_user, 'mode_preference', 'team')
     
-    # Get current team from session or first team
-    current_team_id = session.get('current_team_id')
-    current_team = None
-    
-    if current_team_id:
-        current_team = next((t for t in user_teams if t.id == current_team_id), None)
-    
-    if not current_team and user_teams:
-        current_team = user_teams[0]
-        session['current_team_id'] = current_team.id
-    
-    # Get team data if user has a team
-    recent_files = []
-    team_messages = []
-    team_activities = []
-    team_members = []
-    
-    if current_team:
-        # Get recent files
+    if user_mode == 'single':
+        # Single mode - show only user's personal files
         recent_files = File.query.filter(
-            File.team_id == current_team.id,
-            File.is_deleted == False
+            File.uploaded_by == current_user.id,
+            File.is_deleted == False,
+            File.team_id.is_(None)  # Personal files have no team
         ).order_by(File.updated_at.desc()).limit(10).all()
         
-        # Get recent messages
-        team_messages = Message.query.filter(
-            Message.team_id == current_team.id
-        ).order_by(Message.created_at.desc()).limit(20).all()
+        # In single mode, we don't show team data
+        user_teams = []
+        current_team = None
+        team_messages = []
+        team_activities = []
+        team_members = []
         
-        # Get recent activities
-        team_activities = Activity.query.filter(
-            Activity.team_id == current_team.id
-        ).order_by(Activity.created_at.desc()).limit(10).all()
+    else:
+        # Team mode - show team data
+        user_teams = db.session.query(Team).join(TeamMember).filter(
+            TeamMember.user_id == current_user.id
+        ).all()
         
-        # Get team members
-        team_members = db.session.query(User, TeamMember.role).join(
-            TeamMember, User.id == TeamMember.user_id
-        ).filter(TeamMember.team_id == current_team.id).all()
+        # Get current team from session or first team
+        current_team_id = session.get('current_team_id')
+        current_team = None
+        
+        if current_team_id:
+            current_team = next((t for t in user_teams if t.id == current_team_id), None)
+        
+        if not current_team and user_teams:
+            current_team = user_teams[0]
+            session['current_team_id'] = current_team.id
+        
+        # Get team data if user has a team
+        recent_files = []
+        team_messages = []
+        team_activities = []
+        team_members = []
+        
+        if current_team:
+            # Get recent files
+            recent_files = File.query.filter(
+                File.team_id == current_team.id,
+                File.is_deleted == False
+            ).order_by(File.updated_at.desc()).limit(10).all()
+            
+            # Get recent messages
+            team_messages = Message.query.filter(
+                Message.team_id == current_team.id
+            ).order_by(Message.created_at.desc()).limit(20).all()
+            
+            # Get recent activities
+            team_activities = Activity.query.filter(
+                Activity.team_id == current_team.id
+            ).order_by(Activity.created_at.desc()).limit(10).all()
+            
+            # Get team members
+            team_members = db.session.query(User, TeamMember.role).join(
+                TeamMember, User.id == TeamMember.user_id
+            ).filter(TeamMember.team_id == current_team.id).all()
     
     return render_template('dashboard.html',
                          user_teams=user_teams,
@@ -318,7 +352,8 @@ def dashboard():
                          recent_files=recent_files,
                          team_messages=team_messages,
                          team_activities=team_activities,
-                         team_members=team_members)
+                         team_members=team_members,
+                         user_mode=user_mode)
 
 @app.route('/switch_team/<int:team_id>')
 @require_login
@@ -436,20 +471,28 @@ def join_team():
 @app.route('/files')
 @require_login
 def files():
-    current_team_id = session.get('current_team_id')
-    if not current_team_id:
-        flash('Please select a team first.', 'warning')
-        return redirect(url_for('dashboard'))
+    user_mode = getattr(current_user, 'mode_preference', 'team')
     
-    # Check team membership
-    membership = TeamMember.query.filter(
-        TeamMember.team_id == current_team_id,
-        TeamMember.user_id == current_user.id
-    ).first()
-    
-    if not membership:
-        flash('You are not a member of this team.', 'error')
-        return redirect(url_for('dashboard'))
+    if user_mode == 'single':
+        # Single mode - show personal files
+        current_team_id = None
+        membership = None
+    else:
+        # Team mode - check team requirements
+        current_team_id = session.get('current_team_id')
+        if not current_team_id:
+            flash('Please select a team first.', 'warning')
+            return redirect(url_for('dashboard'))
+        
+        # Check team membership
+        membership = TeamMember.query.filter(
+            TeamMember.team_id == current_team_id,
+            TeamMember.user_id == current_user.id
+        ).first()
+        
+        if not membership:
+            flash('You are not a member of this team.', 'error')
+            return redirect(url_for('dashboard'))
     
     folder_id = request.args.get('folder', type=int)
     search_query = request.args.get('search', '').strip()
@@ -457,26 +500,42 @@ def files():
     # Get current folder
     current_folder = None
     if folder_id:
-        current_folder = Folder.query.filter(
-            Folder.id == folder_id,
-            Folder.team_id == current_team_id
-        ).first()
-        if not current_folder:
-            flash('Folder not found.', 'error')
+        if user_mode == 'single':
+            # In single mode, folders are not supported yet
+            flash('Folders are not supported in single mode.', 'warning')
             return redirect(url_for('files'))
+        else:
+            current_folder = Folder.query.filter(
+                Folder.id == folder_id,
+                Folder.team_id == current_team_id
+            ).first()
+            if not current_folder:
+                flash('Folder not found.', 'error')
+                return redirect(url_for('files'))
     
     # Get folders in current directory
-    folders = Folder.query.filter(
-        Folder.team_id == current_team_id,
-        Folder.parent_id == folder_id
-    ).order_by(Folder.name).all()
+    if user_mode == 'single':
+        folders = []  # No folders in single mode
+    else:
+        folders = Folder.query.filter(
+            Folder.team_id == current_team_id,
+            Folder.parent_id == folder_id
+        ).order_by(Folder.name).all()
     
     # Get files in current directory
-    files_query = File.query.filter(
-        File.team_id == current_team_id,
-        File.folder_id == folder_id,
-        File.is_deleted == False
-    )
+    if user_mode == 'single':
+        files_query = File.query.filter(
+            File.team_id.is_(None),  # Personal files
+            File.uploaded_by == current_user.id,
+            File.folder_id == folder_id,
+            File.is_deleted == False
+        )
+    else:
+        files_query = File.query.filter(
+            File.team_id == current_team_id,
+            File.folder_id == folder_id,
+            File.is_deleted == False
+        )
     
     # Apply search filter
     if search_query:
@@ -503,38 +562,53 @@ def files():
                          current_folder=current_folder,
                          breadcrumbs=breadcrumbs,
                          search_query=search_query,
-                         membership=membership)
+                         membership=membership,
+                         user_mode=user_mode)
 
 @app.route('/upload', methods=['GET', 'POST'])
 @require_login
 def upload_file():
-    current_team_id = session.get('current_team_id')
-    if not current_team_id:
-        flash('Please select a team first.', 'warning')
-        return redirect(url_for('dashboard'))
+    user_mode = getattr(current_user, 'mode_preference', 'team')
     
-    # Check team membership and permissions
-    membership = TeamMember.query.filter(
-        TeamMember.team_id == current_team_id,
-        TeamMember.user_id == current_user.id
-    ).first()
-    
-    # Check file upload permissions - admin controls who can upload
-    team = Team.query.get(current_team_id)
-    can_upload = False
-    
-    if membership.role == 'admin':
-        can_upload = True
-    elif membership.role == 'editor':
-        # Check if admin allows editors to upload (default: yes)
-        can_upload = getattr(team, 'allow_editor_uploads', True)
-    else:  # viewer
-        # Check if admin allows viewers to upload (default: no)
-        can_upload = getattr(team, 'allow_viewer_uploads', False)
-    
-    if not can_upload:
-        flash('You do not have permission to upload files in this team.', 'error')
-        return redirect(url_for('files'))
+    if user_mode == 'single':
+        # Single mode - upload to personal space
+        current_team_id = None
+        can_upload = True  # Users can always upload in single mode
+        team = None
+        membership = None
+    else:
+        # Team mode - check team permissions
+        current_team_id = session.get('current_team_id')
+        if not current_team_id:
+            flash('Please select a team first.', 'warning')
+            return redirect(url_for('dashboard'))
+        
+        # Check team membership and permissions
+        membership = TeamMember.query.filter(
+            TeamMember.team_id == current_team_id,
+            TeamMember.user_id == current_user.id
+        ).first()
+        
+        # Check file upload permissions - admin controls who can upload
+        team = Team.query.get(current_team_id)
+        can_upload = False
+        
+        if membership and membership.role == 'admin':
+            can_upload = True
+        elif membership and membership.role == 'editor':
+            # Check if admin allows editors to upload (default: yes)
+            can_upload = getattr(team, 'allow_editor_uploads', True)
+        elif membership and membership.role == 'viewer':
+            # Check if admin allows viewers to upload (default: no)
+            can_upload = getattr(team, 'allow_viewer_uploads', False)
+        else:
+            # No membership found
+            flash('You are not a member of this team.', 'error')
+            return redirect(url_for('files'))
+        
+        if not can_upload:
+            flash('You do not have permission to upload files in this team.', 'error')
+            return redirect(url_for('files'))
     
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -552,6 +626,27 @@ def upload_file():
             # Secure filename
             original_filename = file.filename
             filename = secure_filename(original_filename)
+            
+            # Check for duplicate file in the same location
+            if user_mode == 'single':
+                existing_file = File.query.filter(
+                    File.team_id.is_(None),  # Personal files
+                    File.uploaded_by == current_user.id,
+                    File.folder_id == folder_id,
+                    File.original_filename == original_filename,
+                    File.is_deleted == False
+                ).first()
+            else:
+                existing_file = File.query.filter(
+                    File.team_id == current_team_id,
+                    File.folder_id == folder_id,
+                    File.original_filename == original_filename,
+                    File.is_deleted == False
+                ).first()
+            
+            if existing_file:
+                flash(f'A file with the name "{original_filename}" already exists in this location.', 'error')
+                return redirect(request.url)
             
             # Generate unique filename
             file_id = str(uuid.uuid4())
@@ -579,11 +674,17 @@ def upload_file():
                         
                 # Local storage fallback or primary
                 if not s3_key:
-                    # Create team directory if it doesn't exist
-                    team_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_team_id))
-                    os.makedirs(team_upload_dir, exist_ok=True)
+                    if user_mode == 'single':
+                        # Create personal directory
+                        personal_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'personal', str(current_user.id))
+                        os.makedirs(personal_upload_dir, exist_ok=True)
+                        file_path = os.path.join(personal_upload_dir, unique_filename)
+                    else:
+                        # Create team directory
+                        team_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_team_id))
+                        os.makedirs(team_upload_dir, exist_ok=True)
+                        file_path = os.path.join(team_upload_dir, unique_filename)
                     
-                    file_path = os.path.join(team_upload_dir, unique_filename)
                     file.save(file_path)
                     file_size = os.path.getsize(file_path)
                 
@@ -597,7 +698,7 @@ def upload_file():
                     mime_type=file.content_type or 'application/octet-stream',
                     storage_type=storage_type,
                     s3_key=s3_key,
-                    team_id=current_team_id,
+                    team_id=current_team_id,  # None for single mode
                     folder_id=folder_id,
                     uploaded_by=current_user.id
                 )
@@ -622,9 +723,10 @@ def upload_file():
                 
                 db.session.commit()
                 
-                # Log activity
-                log_activity(current_team_id, 'upload_file', 'file', new_file.id, 
-                           f'Uploaded "{original_filename}"')
+                # Log activity (only in team mode)
+                if user_mode == 'team' and current_team_id:
+                    log_activity(current_team_id, 'upload_file', 'file', new_file.id, 
+                               f'Uploaded "{original_filename}"')
                 
                 flash('File uploaded successfully!', 'success')
                 return redirect(url_for('files', folder=folder_id))
@@ -639,11 +741,14 @@ def upload_file():
     
     # Get folders for upload form
     folder_id = request.args.get('folder', type=int)
-    folders = Folder.query.filter(
-        Folder.team_id == current_team_id
-    ).order_by(Folder.name).all()
+    if user_mode == 'single':
+        folders = []  # No folders in single mode for now
+    else:
+        folders = Folder.query.filter(
+            Folder.team_id == current_team_id
+        ).order_by(Folder.name).all()
     
-    return render_template('file_upload.html', folders=folders, current_folder_id=folder_id)
+    return render_template('file_upload.html', folders=folders, current_folder_id=folder_id, user_mode=user_mode)
 
 @app.route('/file/<int:file_id>')
 @require_login
@@ -690,7 +795,7 @@ def edit_file_simple(file_id):
         TeamMember.user_id == current_user.id
     ).first()
     
-    if not membership or membership.role == 'viewer':
+    if not membership or (membership and membership.role == 'viewer'):
         flash('You do not have permission to edit this file.', 'error')
         return redirect(url_for('view_file', file_id=file_id))
     
@@ -864,7 +969,7 @@ def delete_message(message_id):
     if not membership:
         return jsonify({'success': False, 'error': 'Access denied'})
     
-    can_delete = (message.sender_id == current_user.id or membership.role == 'admin')
+    can_delete = (message.sender_id == current_user.id or (membership and membership.role == 'admin'))
     if not can_delete:
         return jsonify({'success': False, 'error': 'Permission denied'})
     
@@ -919,7 +1024,7 @@ def team_settings(team_id):
         flash('You are not a member of this team.', 'error')
         return redirect(url_for('dashboard'))
     
-    if request.method == 'POST' and membership.role == 'admin':
+    if request.method == 'POST' and membership and membership.role == 'admin':
         # Update team settings
         team.name = request.form.get('team_name', team.name)
         team.description = request.form.get('team_description', team.description)
@@ -980,7 +1085,7 @@ def create_folder():
         TeamMember.user_id == current_user.id
     ).first()
     
-    if not membership or membership.role == 'viewer':
+    if not membership or (membership and membership.role == 'viewer'):
         flash('You do not have permission to create folders.', 'error')
         return redirect(url_for('files'))
     
@@ -1019,7 +1124,7 @@ def delete_file(file_id):
         TeamMember.user_id == current_user.id
     ).first()
     
-    if not membership or (membership.role == 'viewer' and file.uploaded_by != current_user.id):
+    if not membership or (membership and membership.role == 'viewer' and file.uploaded_by != current_user.id):
         flash('You do not have permission to delete this file.', 'error')
         return redirect(url_for('view_file', file_id=file_id))
     
@@ -1034,3 +1139,33 @@ def delete_file(file_id):
     
     flash('File deleted successfully!', 'success')
     return redirect(url_for('files', folder=file.folder_id))
+
+@app.route('/help')
+def help_page():
+    """Help and guidelines page"""
+    return render_template('help.html')
+
+@app.route('/feedback', methods=['GET', 'POST'])
+def feedback():
+    """Feedback submission page"""
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        subject = request.form.get('subject', '').strip()
+        message = request.form.get('message', '').strip()
+        
+        if not name or not subject or not message:
+            flash('Please fill in all required fields.', 'error')
+            return render_template('feedback.html')
+        
+        # In a real application, you would save this to database or send email
+        # For now, we'll just show a success message
+        flash('Thank you for your feedback! We will get back to you soon.', 'success')
+        return redirect(url_for('feedback'))
+    
+    return render_template('feedback.html')
+
+@app.route('/about')
+def about():
+    """About page with application information"""
+    return render_template('about.html')

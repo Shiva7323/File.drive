@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}About - File Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="glass-card">
+                <div class="card-header text-center">
+                    <h1 class="display-6 fw-bold mb-2">
+                        <span class="gradient-text">About File Drive</span>
+                    </h1>
+                    <p class="text-muted">Your modern file management and collaboration platform</p>
+                </div>
+
+                <div class="card-body">
+                    <!-- Mission Statement -->
+                    <div class="mb-5">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="mb-3">
+                                    <i class="fas fa-bullseye me-2"></i>Our Mission
+                                </h3>
+                                <p class="lead">
+                                    File Drive is designed to simplify file management and team collaboration.
+                                    We believe that organizing and sharing files should be effortless, secure, and
+                                    intuitive.
+                                </p>
+                                <p>
+                                    Whether you're working solo or with a team, File Drive provides the tools you need
+                                    to store, organize, and collaborate on your files effectively.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="feature-icon">
+                                    <i class="fas fa-cloud-upload-alt display-1 text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Features -->
+                    <div class="mb-5">
+                        <h3 class="mb-4 text-center">
+                            <i class="fas fa-star me-2"></i>Key Features
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon-small">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <h5>Single Mode</h5>
+                                    <p>Personal file storage with complete privacy. Perfect for individual users who
+                                        want to keep their files organized and accessible.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon-small">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h5>Team Mode</h5>
+                                    <p>Collaborative workspace with role-based permissions. Ideal for teams that need to
+                                        share and work on files together.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon-small">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <h5>Team Chat</h5>
+                                    <p>Real-time messaging with message editing and deletion capabilities. Stay
+                                        connected with your team members.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon-small">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <h5>File Editing</h5>
+                                    <p>Edit text files directly in your browser. Support for various file types
+                                        including code files and documents.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon-small">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <h5>Secure Storage</h5>
+                                    <p>Your files are stored securely with proper access controls and user
+                                        authentication.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon-small">
+                                        <i class="fas fa-mobile-alt"></i>
+                                    </div>
+                                    <h5>Responsive Design</h5>
+                                    <p>Access your files from any device with our mobile-friendly, responsive interface.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Technology Stack -->
+                    <div class="mb-5">
+                        <h3 class="mb-4 text-center">
+                            <i class="fas fa-cogs me-2"></i>Technology Stack
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="tech-card">
+                                    <h5><i class="fab fa-python me-2"></i>Backend</h5>
+                                    <ul>
+                                        <li>Flask - Web framework</li>
+                                        <li>SQLAlchemy - Database ORM</li>
+                                        <li>SQLite - Database</li>
+                                        <li>Werkzeug - Security utilities</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="tech-card">
+                                    <h5><i class="fab fa-html5 me-2"></i>Frontend</h5>
+                                    <ul>
+                                        <li>HTML5 & CSS3</li>
+                                        <li>Bootstrap 5 - UI framework</li>
+                                        <li>JavaScript - Interactivity</li>
+                                        <li>Font Awesome - Icons</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security & Privacy -->
+                    <div class="mb-5">
+                        <h3 class="mb-4 text-center">
+                            <i class="fas fa-lock me-2"></i>Security & Privacy
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="security-card">
+                                    <h5><i class="fas fa-user-shield me-2"></i>User Security</h5>
+                                    <ul>
+                                        <li>Secure password hashing with scrypt</li>
+                                        <li>Session-based authentication</li>
+                                        <li>Role-based access control</li>
+                                        <li>Input validation and sanitization</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="security-card">
+                                    <h5><i class="fas fa-file-shield me-2"></i>File Security</h5>
+                                    <ul>
+                                        <li>Secure file upload handling</li>
+                                        <li>File type validation</li>
+                                        <li>Permission-based file access</li>
+                                        <li>Soft delete for data recovery</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Getting Started -->
+                    <div class="mb-5">
+                        <h3 class="mb-4 text-center">
+                            <i class="fas fa-rocket me-2"></i>Getting Started
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="step-card">
+                                    <div class="step-number">1</div>
+                                    <h5>Create Account</h5>
+                                    <p>Sign up with a unique username and secure password. No email required!</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="step-card">
+                                    <div class="step-number">2</div>
+                                    <h5>Choose Mode</h5>
+                                    <p>Select between Single Mode for personal use or Team Mode for collaboration.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="step-card">
+                                    <div class="step-number">3</div>
+                                    <h5>Start Uploading</h5>
+                                    <p>Upload your files and start organizing them in your workspace.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact & Support -->
+                    <div class="mb-5">
+                        <h3 class="mb-4 text-center">
+                            <i class="fas fa-headset me-2"></i>Support & Contact
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="support-card">
+                                    <h5><i class="fas fa-question-circle me-2"></i>Need Help?</h5>
+                                    <p>Check our comprehensive help guide for detailed instructions and troubleshooting
+                                        tips.</p>
+                                    <a href="{{ url_for('help_page') }}" class="btn btn-primary">
+                                        <i class="fas fa-book me-2"></i>View Help Guide
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="support-card">
+                                    <h5><i class="fas fa-comment me-2"></i>Send Feedback</h5>
+                                    <p>Have suggestions or found an issue? We'd love to hear from you!</p>
+                                    <a href="{{ url_for('feedback') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-paper-plane me-2"></i>Send Feedback
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version Info -->
+                    <div class="text-center">
+                        <div class="version-info">
+                            <h6 class="text-muted">File Drive v1.0</h6>
+                            <p class="text-muted small">
+                                Built with ❤️ for modern file management and team collaboration
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        height: 100%;
+        backdrop-filter: blur(10px);
+    }
+
+    .feature-icon {
+        margin-bottom: 1rem;
+    }
+
+    .feature-icon-small {
+        width: 60px;
+        height: 60px;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: var(--bs-primary);
+    }
+
+    .tech-card,
+    .security-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .tech-card h5,
+    .security-card h5 {
+        color: var(--bs-primary);
+        margin-bottom: 1rem;
+    }
+
+    .tech-card ul,
+    .security-card ul {
+        margin-bottom: 0;
+        padding-left: 1rem;
+    }
+
+    .step-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        height: 100%;
+        backdrop-filter: blur(10px);
+        position: relative;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin: 0 auto 1rem;
+    }
+
+    .support-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .version-info {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}

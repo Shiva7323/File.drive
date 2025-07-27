@@ -26,10 +26,10 @@
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST" action="{{ url_for('email_login') }}">
+                    <form method="POST" action="{{ url_for('login') }}">
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control glass-input" id="email" name="email" required placeholder="Enter your email">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control glass-input" id="username" name="username" required placeholder="Enter your username">
                         </div>
 
                         <div class="mb-4">

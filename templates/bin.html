@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Bin - {{ team.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-trash-alt me-2"></i>
+                            Bin
+                        </h2>
+                        <p class="text-muted mb-0">Team: {{ team.name }}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if team_member.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('empty_bin') }}"
+                            onsubmit="return confirm('Are you sure you want to permanently delete all files in the bin? This action cannot be undone.')">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Empty Bin
+                            </button>
+                        </form>
+                        {% endif %}
+                        <a href="{{ url_for('files') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Files
+                        </a>
+                    </div>
+                </div>
+
+                {% if bin_files %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>Size</th>
+                                <th>Deleted By</th>
+                                <th>Deleted Date</th>
+                                <th>Expires</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in bin_files %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="file-icon me-3">
+                                            <i class="fas fa-file"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ file.original_filename }}</div>
+                                            <small class="text-muted">{{ file.file_type }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ (file.file_size / 1024) | round(1) }} KB</td>
+                                <td>
+                                    {% if file.deleted_by %}
+                                    {% set deleter = User.query.get(file.deleted_by) %}
+                                    {{ deleter.display_name if deleter else 'Unknown' }}
+                                    {% else %}
+                                    Unknown
+                                    {% endif %}
+                                </td>
+                                <td>{{ file.deleted_at.strftime('%Y-%m-%d %H:%M') if file.deleted_at else 'Unknown' }}
+                                </td>
+                                <td>
+                                    {% if file.bin_expiry_date %}
+                                    {% set days_left = ((file.bin_expiry_date - now) / 86400) | round(0) %}
+                                    {% if days_left > 0 %}
+                                    <span class="text-warning">{{ days_left }} days left</span>
+                                    {% else %}
+                                    <span class="text-danger">Expired</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-muted">No expiry</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% if team_member.role == 'admin' or not team.only_admin_can_restore %}
+                                        <form method="POST" action="{{ url_for('restore_file', file_id=file.id) }}"
+                                            class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-undo me-1"></i>Restore
+                                            </button>
+                                        </form>
+                                        {% endif %}
+
+                                        {% if team_member.role == 'admin' %}
+                                        <form method="POST"
+                                            action="{{ url_for('permanently_delete_file', file_id=file.id) }}"
+                                            onsubmit="return confirm('Are you sure you want to permanently delete this file? This action cannot be undone.')"
+                                            class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-trash-alt fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Bin is Empty</h4>
+                    <p class="text-muted">No files have been moved to the bin yet.</p>
+                    <a href="{{ url_for('files') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Files
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add current time for expiry calculations
+    document.addEventListener('DOMContentLoaded', function () {
+        // You can add any JavaScript functionality here
+    });
+</script>
+{% endblock %}

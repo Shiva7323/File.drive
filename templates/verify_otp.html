@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up - File Drive{% endblock %}
+{% block title %}Verify OTP - File Drive{% endblock %}
 
 {% block content %}
 <div class="auth-container">
@@ -10,9 +10,9 @@
                 <div class="glass-card p-4">
                     <div class="text-center mb-4">
                         <h1 class="display-6 fw-bold mb-2">
-                            <span class="gradient-text">Create Account</span>
+                            <span class="gradient-text">Verify Account</span>
                         </h1>
-                        <p class="text-muted">Join File Drive and start collaborating</p>
+                        <p class="text-muted">Enter the OTP sent to your email/phone</p>
                     </div>
 
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -27,37 +27,38 @@
                     {% endif %}
                     {% endwith %}
 
-                    <form method="POST" action="{{ url_for('signup') }}">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username *</label>
-                            <input type="text" class="form-control glass-input" id="username" name="username" required
-                                placeholder="Choose a username" minlength="3" maxlength="50" pattern="[a-zA-Z0-9_]+">
-                            <div class="form-text">Username must be 3-50 characters, letters, numbers, and underscores
-                                only</div>
-                        </div>
+                    {% if dev_otp %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Development Mode:</strong> Your OTP is: <code class="fs-5 fw-bold">{{ dev_otp }}</code>
+                        <br><small class="text-muted">In production, this would be sent to your email/phone</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
 
+                    <form method="POST" action="{{ url_for('verify_otp', user_id=user_id) }}">
                         <div class="mb-4">
-                            <label for="password" class="form-label">Password *</label>
-                            <input type="password" class="form-control glass-input" id="password" name="password"
-                                required placeholder="Choose a secure password" minlength="8">
-                            <div class="form-text">Password must be at least 8 characters long with letters, numbers,
-                                and special characters</div>
+                            <label for="otp" class="form-label">OTP Code</label>
+                            <input type="text" class="form-control glass-input text-center" id="otp" name="otp"
+                                placeholder="Enter 6-digit OTP" maxlength="6" pattern="[0-9]{6}" required>
+                            <div class="form-text">Enter the 6-digit code sent to your email/phone</div>
                         </div>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-user-plus me-2"></i>Create Account
+                                <i class="fas fa-check me-2"></i>Verify Account
                             </button>
                         </div>
                     </form>
 
                     <div class="text-center mt-4">
                         <p class="text-muted">
-                            Already have an account?
-                            <a href="{{ url_for('login') }}" class="text-decoration-none">Sign in here</a>
+                            Didn't receive the OTP?
+                            <a href="{{ url_for('signup') }}" class="text-decoration-none">Try again</a>
                         </p>
                         <p class="text-muted">
-                            Or try our <a href="{{ url_for('demo_dashboard') }}" class="text-decoration-none">demo</a>
+                            Or <a href="{{ url_for('login') }}" class="text-decoration-none">sign in</a> if you
+                            already have an account
                         </p>
                     </div>
                 </div>
@@ -76,6 +77,8 @@
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         color: var(--bs-body-color);
+        font-size: 1.2rem;
+        letter-spacing: 0.5rem;
     }
 
     .glass-input:focus {
@@ -86,10 +89,25 @@
 
     .glass-input::placeholder {
         color: rgba(255, 255, 255, 0.7);
+        letter-spacing: normal;
     }
 
     [data-bs-theme="dark"] .glass-input::placeholder {
         color: rgba(255, 255, 255, 0.5);
     }
 </style>
+
+<script>
+    // Auto-focus on OTP input
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('otp').focus();
+    });
+
+    // Auto-advance to next input (if we had multiple OTP inputs)
+    document.getElementById('otp').addEventListener('input', function () {
+        if (this.value.length === 6) {
+            this.form.submit();
+        }
+    });
+</script>
 {% endblock %}

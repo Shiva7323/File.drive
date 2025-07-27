@@ -63,7 +63,9 @@ def make_replit_blueprint():
     try:
         repl_id = os.environ['REPL_ID']
     except KeyError:
-        raise SystemExit("the REPL_ID environment variable must be set")
+        # Use a default value for development
+        repl_id = os.environ.get('REPL_ID', 'demo-repl-id')
+        print(f"Warning: REPL_ID not set, using default: {repl_id}")
 
     issuer_url = os.environ.get('ISSUER_URL', "https://replit.com/oidc")
 
@@ -150,25 +152,8 @@ def require_login(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             session["next_url"] = get_next_navigation_url(request)
-            # Redirect to email login instead of Replit login as default
-            return redirect(url_for('email_login'))
-
-        # Only handle token refresh for Replit OAuth users
-        if hasattr(current_user, 'auth_method') and current_user.auth_method == 'replit':
-            try:
-                expires_in = replit.token.get('expires_in', 0) if replit.token else 0
-                if expires_in < 0:
-                    refresh_token_url = issuer_url + "/token"
-                    try:
-                        token = replit.refresh_token(token_url=refresh_token_url, client_id=os.environ['REPL_ID'])
-                    except InvalidGrantError:
-                        # If the refresh token is invalid, the user needs to re-login.
-                        session["next_url"] = get_next_navigation_url(request)
-                        return redirect(url_for('replit_auth.login'))
-                    replit.token_updater(token)
-            except (AttributeError, TypeError):
-                # If there's an issue with the Replit token, continue anyway
-                pass
+            # Redirect to login as default
+            return redirect(url_for('login'))
 
         return f(*args, **kwargs)
 

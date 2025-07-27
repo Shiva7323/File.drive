@@ -1,22 +1,22 @@
 from datetime import datetime
 import uuid
+import re
 from app import db
-from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String, unique=True, nullable=True)
-    password_hash = db.Column(db.String(256))  # For email authentication
+    password_hash = db.Column(db.String(256), nullable=False)
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
     theme_preference = db.Column(db.String, default='light')  # light or dark
-    auth_method = db.Column(db.String(20), default='replit')  # 'replit' or 'email'
+    mode_preference = db.Column(db.String, default='team')  # 'single' or 'team'
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
@@ -27,12 +27,11 @@ class User(UserMixin, db.Model):
     messages = db.relationship('Message', back_populates='sender')
 
     def set_password(self, password):
-        """Set password hash for email authentication"""
+        """Set password hash"""
         self.password_hash = generate_password_hash(password)
-        self.auth_method = 'email'
     
     def check_password(self, password):
-        """Check password for email authentication"""
+        """Check password"""
         return check_password_hash(self.password_hash, password) if self.password_hash else False
     
     @property
@@ -41,35 +40,48 @@ class User(UserMixin, db.Model):
             return f"{self.first_name} {self.last_name}"
         elif self.first_name:
             return self.first_name
-        elif self.email:
-            return self.email.split('@')[0]
+        elif self.username:
+            return self.username
         else:
             return f"User {self.id[:8]}"
     
     @staticmethod
-    def create_email_user(email, password, first_name=None, last_name=None):
-        """Create a new user with email authentication"""
+    def validate_username(username):
+        """Validate username format"""
+        if not username:
+            return False, "Username is required"
+        if len(username) < 3:
+            return False, "Username must be at least 3 characters long"
+        if len(username) > 50:
+            return False, "Username must be less than 50 characters"
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            return False, "Username can only contain letters, numbers, and underscores"
+        return True, ""
+    
+    @staticmethod
+    def validate_password(password):
+        """Validate password strength"""
+        if not password:
+            return False, "Password is required"
+        if len(password) < 8:
+            return False, "Password must be at least 8 characters long"
+        if not re.match(r'^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]+$', password):
+            return False, "Password can only contain letters, numbers, and special characters"
+        return True, ""
+    
+    @staticmethod
+    def create_user(username, password, email=None, first_name=None, last_name=None):
+        """Create a new user"""
         user = User()
         user.id = str(uuid.uuid4())
-        user.email = email
+        user.username = username
+        user.email = email if email and email.strip() else None  # Store None instead of empty string
         user.first_name = first_name
         user.last_name = last_name
-        user.auth_method = 'email'
         user.set_password(password)
         return user
 
-# (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-class OAuth(OAuthConsumerMixin, db.Model):
-    user_id = db.Column(db.String, db.ForeignKey(User.id))
-    browser_session_key = db.Column(db.String, nullable=False)
-    user = db.relationship(User)
 
-    __table_args__ = (UniqueConstraint(
-        'user_id',
-        'browser_session_key',
-        'provider',
-        name='uq_user_browser_session_key_provider',
-    ),)
 
 class Team(db.Model):
     __tablename__ = 'teams'

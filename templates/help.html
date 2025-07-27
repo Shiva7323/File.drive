@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Guidelines - File Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-card">
+                <div class="card-header text-center">
+                    <h1 class="display-6 fw-bold mb-2">
+                        <span class="gradient-text">Help & Guidelines</span>
+                    </h1>
+                    <p class="text-muted">Everything you need to know about File Drive</p>
+                </div>
+
+                <div class="card-body">
+                    <!-- Getting Started -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-rocket me-2"></i>Getting Started
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-user-plus me-2"></i>1. Create Account</h5>
+                                    <p>Sign up with a unique username and secure password. Username must be 3-50
+                                        characters with letters, numbers, and underscores only.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-cog me-2"></i>2. Choose Mode</h5>
+                                    <p>Switch between Single Mode (personal files) and Team Mode (collaborative
+                                        workspace) based on your needs.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modes Explanation -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-layer-group me-2"></i>Understanding Modes
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-user me-2"></i>Single Mode</h5>
+                                    <ul>
+                                        <li>Personal file storage</li>
+                                        <li>No team requirements</li>
+                                        <li>Private workspace</li>
+                                        <li>Direct file management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-users me-2"></i>Team Mode</h5>
+                                    <ul>
+                                        <li>Collaborative workspace</li>
+                                        <li>Team permissions (Admin, Editor, Viewer)</li>
+                                        <li>Team chat functionality</li>
+                                        <li>Shared file management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Management -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-folder me-2"></i>File Management
+                        </h3>
+                        <div class="help-card">
+                            <h5>Supported File Types</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Text Files (Editable):</h6>
+                                    <ul>
+                                        <li>.txt - Plain text files</li>
+                                        <li>.md - Markdown files</li>
+                                        <li>.py - Python scripts</li>
+                                        <li>.js - JavaScript files</li>
+                                        <li>.html - HTML documents</li>
+                                        <li>.css - Stylesheets</li>
+                                        <li>.json - JSON data</li>
+                                        <li>.xml - XML documents</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>All File Types:</h6>
+                                    <ul>
+                                        <li>Images (.jpg, .png, .gif, etc.)</li>
+                                        <li>Documents (.pdf, .doc, .docx)</li>
+                                        <li>Archives (.zip, .rar, .7z)</li>
+                                        <li>Videos (.mp4, .avi, .mov)</li>
+                                        <li>Audio (.mp3, .wav, .flac)</li>
+                                        <li>And many more...</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Features -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-comments me-2"></i>Team Features
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-crown me-2"></i>Admin Role</h5>
+                                    <ul>
+                                        <li>Manage team settings</li>
+                                        <li>Delete any messages</li>
+                                        <li>Manage team members</li>
+                                        <li>Full file permissions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-edit me-2"></i>Editor Role</h5>
+                                    <ul>
+                                        <li>Upload and edit files</li>
+                                        <li>Send messages</li>
+                                        <li>Edit own messages</li>
+                                        <li>Browse team files</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-eye me-2"></i>Viewer Role</h5>
+                                    <ul>
+                                        <li>Browse team files</li>
+                                        <li>Send messages</li>
+                                        <li>Download files</li>
+                                        <li>Read-only access</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Guidelines -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-comment-dots me-2"></i>Chat Guidelines
+                        </h3>
+                        <div class="help-card">
+                            <h5>Message Management</h5>
+                            <ul>
+                                <li><strong>Edit:</strong> You can edit your own messages within 5 minutes of sending
+                                </li>
+                                <li><strong>Delete:</strong> You can delete your own messages anytime</li>
+                                <li><strong>Admin Delete:</strong> Admins can delete any message in the team</li>
+                                <li><strong>Formatting:</strong> Use line breaks for better message formatting</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Security Tips -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-shield-alt me-2"></i>Security & Best Practices
+                        </h3>
+                        <div class="help-card">
+                            <h5>Password Security</h5>
+                            <ul>
+                                <li>Use at least 8 characters</li>
+                                <li>Include letters, numbers, and special characters</li>
+                                <li>Don't share your password</li>
+                                <li>Use unique passwords for different accounts</li>
+                            </ul>
+
+                            <h5 class="mt-4">File Security</h5>
+                            <ul>
+                                <li>Only upload files you own or have permission to share</li>
+                                <li>Be careful with sensitive information in team chats</li>
+                                <li>Regularly review team member permissions</li>
+                                <li>Report suspicious activity to team admins</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Troubleshooting -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-tools me-2"></i>Troubleshooting
+                        </h3>
+                        <div class="help-card">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Common Issues</h5>
+                                    <ul>
+                                        <li><strong>Can't upload:</strong> Check file size and type restrictions</li>
+                                        <li><strong>Can't edit:</strong> Only text files are editable online</li>
+                                        <li><strong>Chat not working:</strong> Refresh the page or check team membership
+                                        </li>
+                                        <li><strong>Permission denied:</strong> Contact your team admin</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Quick Fixes</h5>
+                                    <ul>
+                                        <li>Clear browser cache and cookies</li>
+                                        <li>Try a different browser</li>
+                                        <li>Check your internet connection</li>
+                                        <li>Log out and log back in</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact & Support -->
+                    <div class="mb-5">
+                        <h3 class="mb-3">
+                            <i class="fas fa-headset me-2"></i>Support & Contact
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-envelope me-2"></i>Get Help</h5>
+                                    <p>Need additional help? We're here to assist you.</p>
+                                    <a href="{{ url_for('feedback') }}" class="btn btn-primary">
+                                        <i class="fas fa-comment me-2"></i>Send Feedback
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="help-card">
+                                    <h5><i class="fas fa-info-circle me-2"></i>About File Drive</h5>
+                                    <p>Learn more about our application and features.</p>
+                                    <a href="{{ url_for('about') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-info me-2"></i>About Us
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .help-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .help-card h5 {
+        color: var(--bs-primary);
+        margin-bottom: 1rem;
+    }
+
+    .help-card ul {
+        margin-bottom: 0;
+    }
+
+    .help-card li {
+        margin-bottom: 0.5rem;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}

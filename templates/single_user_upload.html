@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Files - File Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-upload me-2"></i>Upload Files
+                        </h2>
+                        <p class="text-muted mb-0">Single User Mode</p>
+                    </div>
+                    <a href="{{ url_for('single_user_files') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Files
+                    </a>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">
+                            <i class="fas fa-file me-2"></i>Select Files *
+                        </label>
+                        <input type="file" name="file" accept="*/*" class="form-control" id="file" required>
+                        <div class="form-text">You can select multiple files by holding Ctrl (or Cmd on Mac) while
+                            clicking.</div>
+                    </div>
+
+                    <div class="alert alert-info glass-alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Supported formats:</strong> All file types are supported
+                        <br>
+                        <strong>Maximum file size:</strong> 16 MB per file
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="fas fa-upload me-2"></i>Upload Files
+                        </button>
+                        <a href="{{ url_for('single_user_files') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Files
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple upload progress with duplicate prevention
+    let isSubmitting = false;
+    let submitCount = 0;
+
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+        submitCount++;
+        console.log(`Form submission attempt #${submitCount}`);
+
+        if (isSubmitting) {
+            e.preventDefault();
+            console.log('Form submission prevented - already submitting');
+            return false;
+        }
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('file');
+
+        // Check if files are selected
+        if (fileInput.files.length === 0) {
+            alert('Please select files to upload');
+            return false;
+        }
+
+        console.log(`Files selected: ${fileInput.files.length}`);
+        for (let i = 0; i < fileInput.files.length; i++) {
+            console.log(`File ${i + 1}: ${fileInput.files[i].name} (${fileInput.files[i].size} bytes)`);
+        }
+
+        isSubmitting = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+        uploadBtn.disabled = true;
+
+        console.log('Form submitted successfully - preventing further submissions');
+
+        // Prevent any additional form submissions
+        setTimeout(() => {
+            isSubmitting = false;
+            console.log('Form submission lock released');
+        }, 5000); // 5 second timeout
+    });
+
+    // Reset submission state when page loads
+    window.addEventListener('load', function () {
+        isSubmitting = false;
+        submitCount = 0;
+        console.log('Page loaded - reset submission state');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Feedback - File Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-card">
+                <div class="card-header text-center">
+                    <h1 class="display-6 fw-bold mb-2">
+                        <span class="gradient-text">Feedback & Support</span>
+                    </h1>
+                    <p class="text-muted">We'd love to hear from you! Share your thoughts, report issues, or ask for
+                        help.</p>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Feedback Form -->
+                        <div class="col-lg-8">
+                            <div class="feedback-form">
+                                <h4 class="mb-4">
+                                    <i class="fas fa-comment me-2"></i>Send Feedback
+                                </h4>
+
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show"
+                                    role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                                {% endwith %}
+
+                                <form method="POST" action="{{ url_for('feedback') }}">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="name" class="form-label">Your Name *</label>
+                                            <input type="text" class="form-control glass-input" id="name" name="name"
+                                                required placeholder="Enter your name">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="email" class="form-label">Email Address</label>
+                                            <input type="email" class="form-control glass-input" id="email" name="email"
+                                                placeholder="Enter your email (optional)">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="subject" class="form-label">Subject *</label>
+                                        <select class="form-select glass-input" id="subject" name="subject" required>
+                                            <option value="">Choose a subject</option>
+                                            <option value="Bug Report">🐛 Bug Report</option>
+                                            <option value="Feature Request">💡 Feature Request</option>
+                                            <option value="General Feedback">💬 General Feedback</option>
+                                            <option value="Help Request">❓ Help Request</option>
+                                            <option value="Account Issue">👤 Account Issue</option>
+                                            <option value="File Upload Problem">📁 File Upload Problem</option>
+                                            <option value="Team Management">👥 Team Management</option>
+                                            <option value="Other">🔧 Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="message" class="form-label">Message *</label>
+                                        <textarea class="form-control glass-input" id="message" name="message" rows="6"
+                                            required
+                                            placeholder="Please describe your feedback, issue, or question in detail..."></textarea>
+                                        <div class="form-text">Be as detailed as possible to help us assist you better.
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-paper-plane me-2"></i>Send Feedback
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Quick Help -->
+                        <div class="col-lg-4">
+                            <div class="quick-help">
+                                <h4 class="mb-4">
+                                    <i class="fas fa-question-circle me-2"></i>Quick Help
+                                </h4>
+
+                                <div class="help-section mb-4">
+                                    <h6><i class="fas fa-book me-2"></i>Documentation</h6>
+                                    <p class="text-muted">Check our comprehensive help guide for answers to common
+                                        questions.</p>
+                                    <a href="{{ url_for('help_page') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-book-open me-1"></i>View Help
+                                    </a>
+                                </div>
+
+                                <div class="help-section mb-4">
+                                    <h6><i class="fas fa-info-circle me-2"></i>About File Drive</h6>
+                                    <p class="text-muted">Learn more about our application features and capabilities.
+                                    </p>
+                                    <a href="{{ url_for('about') }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-info me-1"></i>About Us
+                                    </a>
+                                </div>
+
+                                <div class="help-section mb-4">
+                                    <h6><i class="fas fa-home me-2"></i>Back to Dashboard</h6>
+                                    <p class="text-muted">Return to your main dashboard to continue working.</p>
+                                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-home me-1"></i>Dashboard
+                                    </a>
+                                </div>
+
+                                <div class="help-section">
+                                    <h6><i class="fas fa-lightbulb me-2"></i>Tips for Better Feedback</h6>
+                                    <ul class="text-muted small">
+                                        <li>Include specific steps to reproduce issues</li>
+                                        <li>Mention your browser and operating system</li>
+                                        <li>Describe what you expected vs what happened</li>
+                                        <li>Attach screenshots if possible</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .feedback-form {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .quick-help {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .help-section {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .help-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .help-section h6 {
+        color: var(--bs-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .help-section ul {
+        margin-bottom: 0;
+        padding-left: 1rem;
+    }
+
+    .help-section li {
+        margin-bottom: 0.25rem;
+    }
+
+    .glass-input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--bs-body-color);
+    }
+
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
