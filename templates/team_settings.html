@@ -13,15 +13,15 @@
                     </h3>
                     <p class="text-muted mb-0">Manage team permissions and settings</p>
                 </div>
-                
+
                 <div class="card-body">
                     {% if membership.role != 'admin' %}
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Only team administrators can modify these settings.
-                        </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Only team administrators can modify these settings.
+                    </div>
                     {% endif %}
-                    
+
                     <form method="POST" action="{{ url_for('team_settings', team_id=team.id) }}">
                         <!-- Basic Team Info -->
                         <div class="mb-4">
@@ -30,23 +30,21 @@
                             </h5>
                             <div class="mb-3">
                                 <label for="team_name" class="form-label">Team Name</label>
-                                <input type="text" class="form-control glass-input" id="team_name" 
-                                       name="team_name" value="{{ team.name }}" 
-                                       {% if membership.role != 'admin' %}readonly{% endif %}>
+                                <input type="text" class="form-control glass-input" id="team_name" name="team_name"
+                                    value="{{ team.name }}" {% if membership.role !='admin' %}readonly{% endif %}>
                             </div>
                             <div class="mb-3">
                                 <label for="team_description" class="form-label">Description</label>
-                                <textarea class="form-control glass-input" id="team_description" 
-                                          name="team_description" rows="3" 
-                                          {% if membership.role != 'admin' %}readonly{% endif %}>{{ team.description or '' }}</textarea>
+                                <textarea class="form-control glass-input" id="team_description" name="team_description"
+                                    rows="3" {% if membership.role !='admin' %}readonly{% endif
+                                    %}>{{ team.description or '' }}</textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Invite Code</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control glass-input" 
-                                           value="{{ team.invite_code }}" readonly id="inviteCode">
-                                    <button class="btn btn-outline-primary" type="button" 
-                                            onclick="copyInviteCode()">
+                                    <input type="text" class="form-control glass-input" value="{{ team.invite_code }}"
+                                        readonly id="inviteCode">
+                                    <button class="btn btn-outline-primary" type="button" onclick="copyInviteCode()">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -63,31 +61,169 @@
                                 <i class="fas fa-info-circle me-2"></i>
                                 Control who can upload files to this team. Admins can always upload files.
                             </div>
-                            
+
+                            <!-- Upload Permission Mode -->
                             <div class="mb-3">
+                                <label class="form-label">Upload Permission Mode</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="mode_role_based"
+                                        name="upload_permission_mode" value="role_based" {% if
+                                        team.upload_permission_mode=='role_based' %}checked{% endif %} {% if
+                                        membership.role !='admin' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="mode_role_based">
+                                        <strong>Role-Based</strong>
+                                        <br><small class="text-muted">Use team roles to determine upload
+                                            permissions</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="mode_selected_users"
+                                        name="upload_permission_mode" value="selected_users" {% if
+                                        team.upload_permission_mode=='selected_users' %}checked{% endif %} {% if
+                                        membership.role !='admin' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="mode_selected_users">
+                                        <strong>Selected Users</strong>
+                                        <br><small class="text-muted">Choose specific team members who can
+                                            upload</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="mode_everyone"
+                                        name="upload_permission_mode" value="everyone" {% if
+                                        team.upload_permission_mode=='everyone' %}checked{% endif %} {% if
+                                        membership.role !='admin' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="mode_everyone">
+                                        <strong>Everyone</strong>
+                                        <br><small class="text-muted">All team members can upload files</small>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Role-Based Permissions (shown when role_based is selected) -->
+                            <div id="role_based_permissions" class="mb-3" {% if team.upload_permission_mode
+                                !='role_based' %}style="display: none;" {% endif %}>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" 
-                                           id="allow_editor_uploads" name="allow_editor_uploads" 
-                                           {% if team.allow_editor_uploads %}checked{% endif %}
-                                           {% if membership.role != 'admin' %}disabled{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="allow_editor_uploads"
+                                        name="allow_editor_uploads" {% if team.allow_editor_uploads %}checked{% endif %}
+                                        {% if membership.role !='admin' %}disabled{% endif %}>
                                     <label class="form-check-label" for="allow_editor_uploads">
                                         <strong>Allow Editors to Upload Files</strong>
                                         <br><small class="text-muted">Editors can upload and manage files</small>
                                     </label>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3">
+
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" 
-                                           id="allow_viewer_uploads" name="allow_viewer_uploads" 
-                                           {% if team.allow_viewer_uploads %}checked{% endif %}
-                                           {% if membership.role != 'admin' %}disabled{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="allow_viewer_uploads"
+                                        name="allow_viewer_uploads" {% if team.allow_viewer_uploads %}checked{% endif %}
+                                        {% if membership.role !='admin' %}disabled{% endif %}>
                                     <label class="form-check-label" for="allow_viewer_uploads">
                                         <strong>Allow Viewers to Upload Files</strong>
-                                        <br><small class="text-muted">Viewers can upload files (not recommended for sensitive teams)</small>
+                                        <br><small class="text-muted">Viewers can upload files (not recommended for
+                                            sensitive teams)</small>
                                     </label>
                                 </div>
+                            </div>
+
+                            <!-- Selected Users Permissions (shown when selected_users is selected) -->
+                            <div id="selected_users_permissions" class="mb-3" {% if team.upload_permission_mode
+                                !='selected_users' %}style="display: none;" {% endif %}>
+                                <label class="form-label">Select Users Who Can Upload</label>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Note:</strong> You (as admin) can always upload files.
+                                </div>
+                                <div class="user-selection-list">
+                                    {% for user, role in team_members %}
+                                    {% if user.id != current_user.id %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="user_{{ user.id }}"
+                                            name="selected_users" value="{{ user.id }}" {% for permission in
+                                            upload_permissions %} {% if permission.user_id==user.id %}checked{% endif %}
+                                            {% endfor %} {% if membership.role !='admin' %}disabled{% endif %}>
+                                        <label class="form-check-label" for="user_{{ user.id }}">
+                                            <strong>{{ user.display_name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ role }}</span>
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Team Members -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-users me-2"></i>Team Members
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Member</th>
+                                            <th>Role</th>
+                                            <th>Joined</th>
+                                            {% if membership.role == 'admin' %}
+                                            <th>Actions</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user, role in team_members %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm me-2">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ user.display_name }}</strong>
+                                                        {% if user.id == team.created_by %}
+                                                        <span class="badge bg-primary ms-1">Creator</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    class="badge bg-{{ 'danger' if role == 'admin' else 'success' if role == 'editor' else 'secondary' }}">
+                                                    {{ role.title() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {% for member in team.members %}
+                                                    {% if member.user_id == user.id %}
+                                                    {{ member.joined_at.strftime('%b %d, %Y') }}
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </small>
+                                            </td>
+                                            {% if membership.role == 'admin' and user.id != current_user.id %}
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                        type="button" data-bs-toggle="dropdown">
+                                                        Change Role
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item" href="#"
+                                                                onclick="changeRole('{{ user.id }}', 'admin')">Make
+                                                                Admin</a></li>
+                                                        <li><a class="dropdown-item" href="#"
+                                                                onclick="changeRole('{{ user.id }}', 'editor')">Make
+                                                                Editor</a></li>
+                                                        <li><a class="dropdown-item" href="#"
+                                                                onclick="changeRole('{{ user.id }}', 'viewer')">Make
+                                                                Viewer</a></li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -122,36 +258,34 @@
                         </div>
 
                         {% if membership.role == 'admin' %}
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save me-2"></i>Save Settings
-                                </button>
-                            </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Settings
+                            </button>
+                        </div>
                         {% endif %}
                     </form>
-                    
+
                     <hr class="my-4">
-                    
+
                     <!-- Danger Zone -->
                     {% if membership.role == 'admin' %}
-                        <div class="danger-zone">
-                            <h5 class="text-danger mb-3">
-                                <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
-                            </h5>
-                            <div class="alert alert-danger">
-                                <strong>Warning:</strong> These actions cannot be undone.
-                            </div>
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-outline-danger" 
-                                        onclick="clearTeamChat({{ team.id }})">
-                                    <i class="fas fa-broom me-2"></i>Clear All Team Messages
-                                </button>
-                                <button type="button" class="btn btn-danger" 
-                                        onclick="deleteTeam({{ team.id }})">
-                                    <i class="fas fa-trash me-2"></i>Delete Team
-                                </button>
-                            </div>
+                    <div class="danger-zone">
+                        <h5 class="text-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+                        </h5>
+                        <div class="alert alert-danger">
+                            <strong>Warning:</strong> These actions cannot be undone.
                         </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-danger" onclick="clearTeamChat({{ team.id }})">
+                                <i class="fas fa-broom me-2"></i>Clear All Team Messages
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="deleteTeam({{ team.id }})">
+                                <i class="fas fa-trash me-2"></i>Delete Team
+                            </button>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -162,130 +296,227 @@
 
 {% block scripts %}
 <script>
-function copyInviteCode() {
-    const inviteCode = document.getElementById('inviteCode');
-    inviteCode.select();
-    document.execCommand('copy');
-    showNotification('Invite code copied to clipboard!', 'success');
-}
-
-function clearTeamChat(teamId) {
-    if (confirm('Are you sure you want to clear all team messages? This action cannot be undone.')) {
-        fetch(`/team/${teamId}/clear_chat`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Team chat cleared successfully', 'success');
-            } else {
-                showNotification(data.error || 'Failed to clear chat', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error clearing chat', 'danger');
-        });
+    function copyInviteCode() {
+        const inviteCode = document.getElementById('inviteCode');
+        inviteCode.select();
+        document.execCommand('copy');
+        showNotification('Invite code copied to clipboard!', 'success');
     }
-}
 
-function deleteTeam(teamId) {
-    const confirmation = prompt('Type "DELETE" to confirm team deletion:');
-    if (confirmation === 'DELETE') {
-        fetch(`/team/${teamId}/delete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Team deleted successfully', 'success');
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 2000);
-            } else {
-                showNotification(data.error || 'Failed to delete team', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error deleting team', 'danger');
-        });
+    function clearTeamChat(teamId) {
+        if (confirm('Are you sure you want to clear all team messages? This action cannot be undone.')) {
+            fetch(`/team/${teamId}/clear_chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Team chat cleared successfully', 'success');
+                    } else {
+                        showNotification(data.error || 'Failed to clear chat', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error clearing chat', 'danger');
+                });
+        }
     }
-}
 
-function showNotification(message, type, duration = 3000) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = `
+    // Handle upload permission mode changes
+    document.addEventListener('DOMContentLoaded', function () {
+        const permissionModes = document.querySelectorAll('input[name="upload_permission_mode"]');
+        const roleBasedSection = document.getElementById('role_based_permissions');
+        const selectedUsersSection = document.getElementById('selected_users_permissions');
+
+        function updatePermissionSections() {
+            const selectedMode = document.querySelector('input[name="upload_permission_mode"]:checked').value;
+
+            if (selectedMode === 'role_based') {
+                roleBasedSection.style.display = 'block';
+                selectedUsersSection.style.display = 'none';
+            } else if (selectedMode === 'selected_users') {
+                roleBasedSection.style.display = 'none';
+                selectedUsersSection.style.display = 'block';
+            } else if (selectedMode === 'everyone') {
+                roleBasedSection.style.display = 'none';
+                selectedUsersSection.style.display = 'none';
+            }
+        }
+
+        permissionModes.forEach(radio => {
+            radio.addEventListener('change', updatePermissionSections);
+        });
+
+        // Initialize on page load
+        updatePermissionSections();
+    });
+
+    function changeRole(userId, newRole) {
+        if (confirm(`Are you sure you want to change this member's role to ${newRole}?`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/team/{{ team.id }}/change_role/${userId}`;
+
+            const roleInput = document.createElement('input');
+            roleInput.type = 'hidden';
+            roleInput.name = 'role';
+            roleInput.value = newRole;
+
+            form.appendChild(roleInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    function deleteTeam(teamId) {
+        const confirmation = prompt('Type "DELETE" to confirm team deletion:');
+        if (confirmation === 'DELETE') {
+            fetch(`/team/${teamId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Team deleted successfully', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 2000);
+                    } else {
+                        showNotification(data.error || 'Failed to delete team', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error deleting team', 'danger');
+                });
+        }
+    }
+
+    function showNotification(message, type, duration = 3000) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = `
         top: 20px;
         right: 20px;
         z-index: 9999;
         min-width: 300px;
         animation: slideInRight 0.3s ease-out;
     `;
-    
-    notification.innerHTML = `
+
+        notification.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.animation = 'slideOutRight 0.3s ease-in';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 300);
-        }
-    }, duration);
-}
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, duration);
+    }
 </script>
 
 <style>
-.danger-zone {
-    border: 2px solid rgba(220, 53, 69, 0.3);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    background: rgba(220, 53, 69, 0.05);
-}
-
-.stat-card {
-    transition: transform 0.2s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
+    .danger-zone {
+        border: 2px solid rgba(220, 53, 69, 0.3);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background: rgba(220, 53, 69, 0.05);
     }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
 
-@keyframes slideOutRight {
-    from {
-        transform: translateX(0);
-        opacity: 1;
+    .stat-card {
+        transition: transform 0.2s ease;
     }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
+
+    .stat-card:hover {
+        transform: translateY(-2px);
     }
-}
+
+    .user-selection-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .user-selection-list .form-check {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s;
+    }
+
+    .user-selection-list .form-check:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-primary);
+    }
+
+    .table {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .table th {
+        background: rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--bs-primary);
+        font-weight: 600;
+    }
+
+    .table td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
 </style>
 {% endblock %}

@@ -1,6 +1,8 @@
 from datetime import datetime
 import uuid
 import re
+import random
+import string
 from app import db
 from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint
@@ -17,6 +19,7 @@ class User(UserMixin, db.Model):
     profile_image_url = db.Column(db.String, nullable=True)
     theme_preference = db.Column(db.String, default='light')  # light or dark
     mode_preference = db.Column(db.String, default='team')  # 'single' or 'team'
+    verification_word = db.Column(db.String(20), nullable=False)  # For password recovery
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
@@ -70,6 +73,21 @@ class User(UserMixin, db.Model):
         return True, ""
     
     @staticmethod
+    def generate_verification_word():
+        """Generate a random verification word between 6-20 characters"""
+        # List of common words that are easy to remember
+        words = [
+            'apple', 'banana', 'cherry', 'dragon', 'eagle', 'forest', 'garden', 'harbor',
+            'island', 'jungle', 'knight', 'lemon', 'mountain', 'ocean', 'palm', 'queen',
+            'river', 'sunset', 'tiger', 'umbrella', 'village', 'window', 'yellow', 'zebra',
+            'butterfly', 'chocolate', 'dolphin', 'elephant', 'fireworks', 'giraffe',
+            'hamburger', 'icecream', 'jellyfish', 'kangaroo', 'lighthouse', 'moonlight',
+            'notebook', 'octopus', 'penguin', 'rainbow', 'sunflower', 'turtle', 'volcano',
+            'waterfall', 'xylophone', 'yacht', 'zucchini'
+        ]
+        return random.choice(words)
+    
+    @staticmethod
     def create_user(username, password, email=None, first_name=None, last_name=None):
         """Create a new user"""
         user = User()
@@ -79,6 +97,7 @@ class User(UserMixin, db.Model):
         user.first_name = first_name
         user.last_name = last_name
         user.set_password(password)
+        user.verification_word = User.generate_verification_word()
         return user
 
 
@@ -95,6 +114,7 @@ class Team(db.Model):
     # Admin control settings for file uploads
     allow_editor_uploads = db.Column(db.Boolean, default=True)
     allow_viewer_uploads = db.Column(db.Boolean, default=False)
+    upload_permission_mode = db.Column(db.String(20), default='role_based')  # 'role_based', 'selected_users', 'everyone'
     
     # Relationships
     creator = db.relationship('User', foreign_keys=[created_by])
@@ -116,6 +136,21 @@ class TeamMember(db.Model):
     user = db.relationship('User', back_populates='team_memberships')
     
     __table_args__ = (UniqueConstraint('team_id', 'user_id', name='uq_team_user'),)
+
+class UploadPermission(db.Model):
+    __tablename__ = 'upload_permissions'
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    granted_by = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    granted_at = db.Column(db.DateTime, default=datetime.now)
+    
+    # Relationships
+    team = db.relationship('Team', foreign_keys=[team_id])
+    user = db.relationship('User', foreign_keys=[user_id])
+    granter = db.relationship('User', foreign_keys=[granted_by])
+    
+    __table_args__ = (UniqueConstraint('team_id', 'user_id', name='uq_upload_permission'),)
 
 class Folder(db.Model):
     __tablename__ = 'folders'
@@ -144,7 +179,7 @@ class File(db.Model):
     storage_type = db.Column(db.String(20), default='local')  # 'local' or 's3'
     s3_key = db.Column(db.String(500), nullable=True)  # S3 object key
     
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     folder_id = db.Column(db.Integer, db.ForeignKey('folders.id'), nullable=True)
     uploaded_by = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     

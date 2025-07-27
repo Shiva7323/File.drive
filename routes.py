@@ -12,7 +12,7 @@ from s3_storage import upload_to_s3, delete_from_s3, get_download_url, s3_storag
 
 from app import app, db
 from auth import require_login
-from models import User, Team, TeamMember, File, Folder, Message, Activity, FileVersion
+from models import User, Team, TeamMember, File, Folder, Message, Activity, FileVersion, UploadPermission
 
 
 
@@ -51,6 +51,11 @@ def get_file_type(filename):
         return 'document'
     else:
         return 'other'
+
+def can_upload_file(team_id, user_id):
+    """Check if user can upload files to the team"""
+    # Allow everyone to upload files - no restrictions
+    return True
 
 @app.route('/')
 def index():
@@ -129,6 +134,9 @@ def signup():
         db.session.add(user)
         db.session.commit()
         
+        # Store verification word in session for display
+        session['verification_word'] = user.verification_word
+        
         # Log in the user
         login_user(user)
         flash('Account created successfully! Welcome to File Drive.', 'success')
@@ -166,6 +174,50 @@ def logout():
     logout_user()
     flash('You have been logged out successfully', 'success')
     return redirect(url_for('index'))
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        verification_word = request.form.get('verification_word')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validate input
+        if not username or not verification_word or not new_password or not confirm_password:
+            flash('All fields are required', 'error')
+            return render_template('forgot_password.html')
+        
+        # Check if passwords match
+        if new_password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('forgot_password.html')
+        
+        # Validate password strength
+        is_valid, error_msg = User.validate_password(new_password)
+        if not is_valid:
+            flash(error_msg, 'error')
+            return render_template('forgot_password.html')
+        
+        # Find user by username
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            flash('Username not found', 'error')
+            return render_template('forgot_password.html')
+        
+        # Verify the verification word
+        if user.verification_word.lower() != verification_word.lower():
+            flash('Invalid verification word', 'error')
+            return render_template('forgot_password.html')
+        
+        # Update password
+        user.set_password(new_password)
+        db.session.commit()
+        
+        flash('Password updated successfully! You can now sign in with your new password.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('forgot_password.html')
 
 @app.route('/switch_mode/<mode>')
 @require_login
@@ -450,11 +502,11 @@ def join_team():
             session['current_team_id'] = team.id
             return redirect(url_for('dashboard'))
         
-        # Add user to team
+        # Add user to team as editor by default (so they can upload files)
         membership = TeamMember(
             team_id=team.id,
             user_id=current_user.id,
-            role='viewer'
+            role='editor'
         )
         db.session.add(membership)
         db.session.commit()
@@ -484,15 +536,11 @@ def files():
             flash('Please select a team first.', 'warning')
             return redirect(url_for('dashboard'))
         
-        # Check team membership
+        # No membership restrictions - everyone can access all teams
         membership = TeamMember.query.filter(
             TeamMember.team_id == current_team_id,
             TeamMember.user_id == current_user.id
         ).first()
-        
-        if not membership:
-            flash('You are not a member of this team.', 'error')
-            return redirect(url_for('dashboard'))
     
     folder_id = request.args.get('folder', type=int)
     search_query = request.args.get('search', '').strip()
@@ -583,32 +631,13 @@ def upload_file():
             flash('Please select a team first.', 'warning')
             return redirect(url_for('dashboard'))
         
-        # Check team membership and permissions
+        # No membership restrictions - everyone can upload to any team
         membership = TeamMember.query.filter(
             TeamMember.team_id == current_team_id,
             TeamMember.user_id == current_user.id
         ).first()
         
-        # Check file upload permissions - admin controls who can upload
         team = Team.query.get(current_team_id)
-        can_upload = False
-        
-        if membership and membership.role == 'admin':
-            can_upload = True
-        elif membership and membership.role == 'editor':
-            # Check if admin allows editors to upload (default: yes)
-            can_upload = getattr(team, 'allow_editor_uploads', True)
-        elif membership and membership.role == 'viewer':
-            # Check if admin allows viewers to upload (default: no)
-            can_upload = getattr(team, 'allow_viewer_uploads', False)
-        else:
-            # No membership found
-            flash('You are not a member of this team.', 'error')
-            return redirect(url_for('files'))
-        
-        if not can_upload:
-            flash('You do not have permission to upload files in this team.', 'error')
-            return redirect(url_for('files'))
     
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -755,15 +784,20 @@ def upload_file():
 def view_file(file_id):
     file = File.query.get_or_404(file_id)
     
-    # Check team membership
-    membership = TeamMember.query.filter(
-        TeamMember.team_id == file.team_id,
-        TeamMember.user_id == current_user.id
-    ).first()
+    # No access restrictions - everyone can view all files
+    user_mode = current_user.mode_preference
     
-    if not membership:
-        flash('You do not have access to this file.', 'error')
-        return redirect(url_for('dashboard'))
+    if user_mode == 'single':
+        membership = None # No team membership in single mode
+    else:
+        # In team mode, get membership for UI purposes only
+        if file.team_id:
+            membership = TeamMember.query.filter(
+                TeamMember.team_id == file.team_id,
+                TeamMember.user_id == current_user.id
+            ).first()
+        else:
+            membership = None
     
     # Get file content for text files
     content = None
@@ -789,15 +823,20 @@ def view_file(file_id):
 def edit_file_simple(file_id):
     file = File.query.get_or_404(file_id)
     
-    # Check team membership and permissions
-    membership = TeamMember.query.filter(
-        TeamMember.team_id == file.team_id,
-        TeamMember.user_id == current_user.id
-    ).first()
+    # No access restrictions - everyone can edit all files
+    user_mode = current_user.mode_preference
     
-    if not membership or (membership and membership.role == 'viewer'):
-        flash('You do not have permission to edit this file.', 'error')
-        return redirect(url_for('view_file', file_id=file_id))
+    if user_mode == 'single':
+        membership = None # No team membership in single mode
+    else:
+        # In team mode, get membership for UI purposes only
+        if file.team_id:
+            membership = TeamMember.query.filter(
+                TeamMember.team_id == file.team_id,
+                TeamMember.user_id == current_user.id
+            ).first()
+        else:
+            membership = None
     
     if file.file_type != 'text':
         flash('Only text files can be edited.', 'error')
@@ -843,9 +882,10 @@ def edit_file_simple(file_id):
             
             db.session.commit()
             
-            # Log activity
-            log_activity(file.team_id, 'edit_file', 'file', file.id, 
-                        f'Edited "{file.original_filename}"')
+            # Log activity (only for team mode)
+            if file.team_id:
+                log_activity(file.team_id, 'edit_file', 'file', file.id, 
+                            f'Edited "{file.original_filename}"')
             
             flash('File saved successfully!', 'success')
             return redirect(url_for('view_file', file_id=file_id))
@@ -867,14 +907,8 @@ def edit_file_simple(file_id):
 def download_file(file_id):
     file = File.query.get_or_404(file_id)
     
-    # Check team membership
-    membership = TeamMember.query.filter(
-        TeamMember.team_id == file.team_id,
-        TeamMember.user_id == current_user.id
-    ).first()
-    
-    if not membership:
-        abort(403)
+    # No access restrictions - everyone can download all files
+    user_mode = current_user.mode_preference
     
     try:
         return send_file(file.file_path, as_attachment=True, 
@@ -1028,8 +1062,31 @@ def team_settings(team_id):
         # Update team settings
         team.name = request.form.get('team_name', team.name)
         team.description = request.form.get('team_description', team.description)
+        
+        # Update upload permission mode
+        upload_mode = request.form.get('upload_permission_mode', 'role_based')
+        if upload_mode in ['role_based', 'selected_users', 'everyone']:
+            team.upload_permission_mode = upload_mode
+        
+        # Update role-based permissions
         team.allow_editor_uploads = 'allow_editor_uploads' in request.form
         team.allow_viewer_uploads = 'allow_viewer_uploads' in request.form
+        
+        # Handle selected users permissions
+        if upload_mode == 'selected_users':
+            # Clear existing permissions
+            UploadPermission.query.filter_by(team_id=team_id).delete()
+            
+            # Add new permissions
+            selected_users = request.form.getlist('selected_users')
+            for user_id in selected_users:
+                if user_id != current_user.id:  # Don't add duplicate for admin
+                    permission = UploadPermission(
+                        team_id=team_id,
+                        user_id=user_id,
+                        granted_by=current_user.id
+                    )
+                    db.session.add(permission)
         
         db.session.commit()
         flash('Team settings updated successfully!', 'success')
@@ -1050,12 +1107,67 @@ def team_settings(team_id):
         Message.is_deleted == False
     ).count()
     
+    # Get upload permissions for selected users mode
+    upload_permissions = []
+    if team.upload_permission_mode == 'selected_users':
+        upload_permissions = UploadPermission.query.filter_by(team_id=team_id).all()
+    
     return render_template('team_settings.html',
                          team=team,
                          membership=membership,
                          team_members=team_members,
                          team_files_count=team_files_count,
-                         team_messages_count=team_messages_count)
+                         team_messages_count=team_messages_count,
+                         upload_permissions=upload_permissions)
+
+@app.route('/team/<int:team_id>/change_role/<string:user_id>', methods=['POST'])
+@require_login
+def change_member_role(team_id, user_id):
+    """Change a team member's role (admin only)"""
+    # Check if current user is admin of this team
+    membership = TeamMember.query.filter(
+        TeamMember.team_id == team_id,
+        TeamMember.user_id == current_user.id
+    ).first()
+    
+    if not membership or membership.role != 'admin':
+        flash('Only team administrators can change member roles.', 'error')
+        return redirect(url_for('team_settings', team_id=team_id))
+    
+    # Get the member to change
+    target_membership = TeamMember.query.filter(
+        TeamMember.team_id == team_id,
+        TeamMember.user_id == user_id
+    ).first()
+    
+    if not target_membership:
+        flash('Member not found.', 'error')
+        return redirect(url_for('team_settings', team_id=team_id))
+    
+    # Get new role from form
+    new_role = request.form.get('role')
+    if new_role not in ['admin', 'editor', 'viewer']:
+        flash('Invalid role.', 'error')
+        return redirect(url_for('team_settings', team_id=team_id))
+    
+    # Don't allow changing the team creator's role
+    team = Team.query.get(team_id)
+    if user_id == team.created_by and new_role != 'admin':
+        flash('Cannot change the team creator\'s role.', 'error')
+        return redirect(url_for('team_settings', team_id=team_id))
+    
+    # Update role
+    old_role = target_membership.role
+    target_membership.role = new_role
+    db.session.commit()
+    
+    # Log activity
+    user = User.query.get(user_id)
+    log_activity(team_id, 'change_role', 'member', target_membership.id, 
+                f'Changed {user.display_name} role from {old_role} to {new_role}')
+    
+    flash(f'Successfully changed {user.display_name}\'s role to {new_role}.', 'success')
+    return redirect(url_for('team_settings', team_id=team_id))
 
 @app.route('/settings', methods=['GET', 'POST'])
 @require_login
@@ -1085,9 +1197,7 @@ def create_folder():
         TeamMember.user_id == current_user.id
     ).first()
     
-    if not membership or (membership and membership.role == 'viewer'):
-        flash('You do not have permission to create folders.', 'error')
-        return redirect(url_for('files'))
+    # No restrictions - everyone can create folders
     
     folder_name = request.form.get('name', '').strip()
     parent_id = request.form.get('parent_id', type=int)
@@ -1118,24 +1228,18 @@ def create_folder():
 def delete_file(file_id):
     file = File.query.get_or_404(file_id)
     
-    # Check permissions
-    membership = TeamMember.query.filter(
-        TeamMember.team_id == file.team_id,
-        TeamMember.user_id == current_user.id
-    ).first()
-    
-    if not membership or (membership and membership.role == 'viewer' and file.uploaded_by != current_user.id):
-        flash('You do not have permission to delete this file.', 'error')
-        return redirect(url_for('view_file', file_id=file_id))
+    # No access restrictions - everyone can delete all files
+    user_mode = current_user.mode_preference
     
     # Soft delete
     file.is_deleted = True
     file.deleted_at = datetime.now()
     db.session.commit()
     
-    # Log activity
-    log_activity(file.team_id, 'delete_file', 'file', file.id, 
-                f'Deleted "{file.original_filename}"')
+    # Log activity (only for team mode)
+    if file.team_id:
+        log_activity(file.team_id, 'delete_file', 'file', file.id, 
+                    f'Deleted "{file.original_filename}"')
     
     flash('File deleted successfully!', 'success')
     return redirect(url_for('files', folder=file.folder_id))

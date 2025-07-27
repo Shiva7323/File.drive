@@ -16,25 +16,28 @@
                     </div>
 
                     {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show"
+                        role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
                     {% endwith %}
 
                     <form method="POST" action="{{ url_for('login') }}">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control glass-input" id="username" name="username" required placeholder="Enter your username">
+                            <input type="text" class="form-control glass-input" id="username" name="username" required
+                                placeholder="Enter your username">
                         </div>
 
                         <div class="mb-4">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control glass-input" id="password" name="password" required placeholder="Enter your password">
+                            <input type="password" class="form-control glass-input" id="password" name="password"
+                                required placeholder="Enter your password">
                         </div>
 
                         <div class="d-grid gap-2">
@@ -45,8 +48,13 @@
                     </form>
 
                     <div class="text-center mt-4">
+                        <p class="text-muted mb-2">
+                            <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">
+                                <i class="fas fa-key me-1"></i>Forgot Password?
+                            </a>
+                        </p>
                         <p class="text-muted">
-                            Don't have an account? 
+                            Don't have an account?
                             <a href="{{ url_for('signup') }}" class="text-decoration-none">Create one here</a>
                         </p>
                         <p class="text-muted">
@@ -60,29 +68,29 @@
 </div>
 
 <style>
-.auth-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, var(--primary-gradient));
-}
+    .auth-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--primary-gradient));
+    }
 
-.glass-input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--bs-body-color);
-}
+    .glass-input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--bs-body-color);
+    }
 
-.glass-input:focus {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
-}
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
 
-.glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
+    .glass-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
 
-[data-bs-theme="dark"] .glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
+    [data-bs-theme="dark"] .glass-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
 </style>
 {% endblock %}

@@ -3,20 +3,22 @@
 Script to recreate the database with correct schema
 """
 
+from app import app, db
 import os
-from database import db
-from models import User, Team, TeamMember, File, Folder, Message, Activity, FileVersion, RecentFile, OAuth
 
 def recreate_database():
-    """Recreate the database with all tables"""
-    print("Dropping all tables...")
-    db.drop_all()
-    
-    print("Creating all tables...")
-    db.create_all()
-    
-    print("Database recreated successfully!")
-    print("All tables created with correct schema.")
+    """Drop and recreate the database with updated schema"""
+    with app.app_context():
+        # Drop all tables
+        print("Dropping all tables...")
+        db.drop_all()
+        
+        # Create all tables with updated schema
+        print("Creating tables with updated schema...")
+        db.create_all()
+        
+        print("Database recreated successfully!")
+        print("The team_id field in the files table is now nullable for single users.")
 
 if __name__ == "__main__":
     recreate_database() 
