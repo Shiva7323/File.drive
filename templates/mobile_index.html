@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}File Drive - Mobile{% endblock %}
+
+{% block content %}
+<div class="mobile-landing-page">
+    <div class="container-fluid">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-12 text-center px-3">
+                <div class="glass-card mobile-landing-card p-4">
+                    <div class="mb-4">
+                        <i class="fas fa-cloud mobile-landing-icon mb-3"></i>
+                        <h1 class="display-5 fw-bold mb-3 gradient-text">File Drive</h1>
+                        <p class="lead mb-4">
+                            Your files, anywhere. Collaborate with your team on the go.
+                        </p>
+                    </div>
+
+                    <div class="mobile-features mb-4">
+                        <div class="mobile-feature-item mb-3">
+                            <i class="fas fa-mobile-alt mb-2"></i>
+                            <h6>Mobile Optimized</h6>
+                            <p class="small">Perfect experience on your phone</p>
+                        </div>
+                        <div class="mobile-feature-item mb-3">
+                            <i class="fas fa-cloud-upload-alt mb-2"></i>
+                            <h6>Easy Upload</h6>
+                            <p class="small">Upload files with one tap</p>
+                        </div>
+                        <div class="mobile-feature-item mb-3">
+                            <i class="fas fa-comments mb-2"></i>
+                            <h6>Team Chat</h6>
+                            <p class="small">Stay connected with your team</p>
+                        </div>
+                    </div>
+
+                    <div class="mobile-cta">
+                        <div class="d-grid gap-2 mb-3">
+                            <a href="{{ url_for('demo_dashboard') }}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-eye me-2"></i>Try Demo
+                            </a>
+                            <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-rocket me-2"></i>Get Started
+                            </a>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-muted mb-2 small">
+                                Already have an account? <a href="{{ url_for('login') }}"
+                                    class="text-decoration-none">Sign In</a>
+                            </p>
+                            <p class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Works best when added to home screen
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile-specific floating elements -->
+                <div class="mobile-floating-elements">
+                    <div class="mobile-floating-element float-1">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="mobile-floating-element float-2">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="mobile-floating-element float-3">
+                        <i class="fas fa-image"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .mobile-landing-page {
+        background: var(--bg-primary);
+        min-height: 100vh;
+        padding: 1rem 0;
+    }
+
+    .mobile-landing-card {
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .mobile-landing-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+    }
+
+    .mobile-features {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .mobile-feature-item {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .mobile-feature-item i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+    }
+
+    .mobile-floating-elements {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .mobile-floating-element {
+        position: absolute;
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.3);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .mobile-floating-element.float-1 {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .mobile-floating-element.float-2 {
+        top: 60%;
+        right: 15%;
+        animation-delay: 2s;
+    }
+
+    .mobile-floating-element.float-3 {
+        bottom: 30%;
+        left: 20%;
+        animation-delay: 4s;
+    }
+
+    @media (max-width: 576px) {
+        .mobile-landing-card {
+            margin: 0.5rem;
+            padding: 1.5rem !important;
+        }
+
+        .mobile-landing-icon {
+            font-size: 2.5rem;
+        }
+
+        .display-5 {
+            font-size: 1.75rem;
+        }
+
+        .lead {
+            font-size: 1rem;
+        }
+
+        .mobile-feature-item {
+            padding: 0.75rem;
+        }
+
+        .mobile-feature-item i {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+{% endblock %}

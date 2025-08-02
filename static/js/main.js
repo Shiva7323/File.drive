@@ -5,7 +5,7 @@ function initializeTheme() {
     // Check for saved theme preference first
     const savedTheme = localStorage.getItem('theme');
     let currentTheme = savedTheme || document.documentElement.getAttribute('data-theme') || 'light';
-    
+
     // Apply the theme
     document.documentElement.setAttribute('data-theme', currentTheme);
     updateThemeIcon(currentTheme);
@@ -14,13 +14,13 @@ function initializeTheme() {
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    
+
     document.documentElement.setAttribute('data-theme', newTheme);
     updateThemeIcon(newTheme);
-    
+
     // Save theme preference (this would normally make an AJAX request)
     localStorage.setItem('theme', newTheme);
-    
+
     // Show theme change notification
     showNotification(`Switched to ${newTheme} mode`, 'info');
 }
@@ -43,15 +43,15 @@ function showNotification(message, type = 'info', duration = 3000) {
         min-width: 300px;
         animation: slideInRight 0.3s ease-out;
     `;
-    
+
     notification.innerHTML = `
         <i class="fas fa-${getIconForType(type)} me-2"></i>
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Auto remove after duration
     setTimeout(() => {
         if (notification.parentNode) {
@@ -79,13 +79,13 @@ function getIconForType(type) {
 // File Upload Enhancements
 function initializeFileUpload() {
     const fileInputs = document.querySelectorAll('input[type="file"]');
-    
+
     fileInputs.forEach(input => {
         // Check if this input already has our handler to prevent double popup
         if (!input.hasAttribute('data-upload-initialized')) {
             input.setAttribute('data-upload-initialized', 'true');
-            
-            input.addEventListener('change', function(e) {
+
+            input.addEventListener('change', function (e) {
                 const files = e.target.files;
                 if (files.length > 0) {
                     validateFile(files[0]);
@@ -107,24 +107,24 @@ function validateFile(file) {
         'image/svg+xml',
         'application/pdf'
     ];
-    
+
     if (file.size > maxSize) {
         showNotification('File size must be less than 16MB', 'danger');
         return false;
     }
-    
+
     if (!allowedTypes.includes(file.type)) {
         showNotification('File type not supported', 'danger');
         return false;
     }
-    
+
     return true;
 }
 
 // Drag and Drop Enhancement
 function initializeDragAndDrop() {
     const dropZones = document.querySelectorAll('.file-drop-zone');
-    
+
     dropZones.forEach(zone => {
         zone.addEventListener('dragover', handleDragOver);
         zone.addEventListener('dragleave', handleDragLeave);
@@ -144,13 +144,13 @@ function handleDragLeave(e) {
 function handleDrop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         const fileInput = e.currentTarget.querySelector('input[type="file"]');
         if (fileInput && validateFile(files[0])) {
             fileInput.files = files;
-            
+
             // Trigger change event
             const event = new Event('change', { bubbles: true });
             fileInput.dispatchEvent(event);
@@ -161,17 +161,17 @@ function handleDrop(e) {
 // Search Functionality
 function initializeSearch() {
     const searchInputs = document.querySelectorAll('input[name="search"]');
-    
+
     searchInputs.forEach(input => {
         let searchTimeout;
-        
-        input.addEventListener('input', function() {
+
+        input.addEventListener('input', function () {
             clearTimeout(searchTimeout);
-            
+
             // Add loading state
             const form = this.closest('form');
             const submitButton = form.querySelector('button[type="submit"]');
-            
+
             searchTimeout = setTimeout(() => {
                 // Auto-submit search after 500ms of no typing
                 if (this.value.length >= 2 || this.value.length === 0) {
@@ -185,16 +185,16 @@ function initializeSearch() {
 // Auto-save for Text Editors
 function initializeAutoSave() {
     const textareas = document.querySelectorAll('.code-editor');
-    
+
     textareas.forEach(textarea => {
         let saveTimeout;
-        
-        textarea.addEventListener('input', function() {
+
+        textarea.addEventListener('input', function () {
             clearTimeout(saveTimeout);
-            
+
             // Show unsaved changes indicator
             showUnsavedIndicator();
-            
+
             // Auto-save after 3 seconds of inactivity
             saveTimeout = setTimeout(() => {
                 autoSave(this);
@@ -205,7 +205,7 @@ function initializeAutoSave() {
 
 function showUnsavedIndicator() {
     let indicator = document.querySelector('.unsaved-indicator');
-    
+
     if (!indicator) {
         indicator = document.createElement('div');
         indicator.className = 'unsaved-indicator badge bg-warning position-fixed';
@@ -243,13 +243,13 @@ function setLoadingState(element, loading = true) {
 // Form Enhancements
 function initializeForms() {
     const forms = document.querySelectorAll('form');
-    
+
     forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             const submitButton = this.querySelector('button[type="submit"]');
             if (submitButton) {
                 setLoadingState(submitButton, true);
-                
+
                 // Prevent double submission
                 setTimeout(() => {
                     setLoadingState(submitButton, false);
@@ -261,7 +261,7 @@ function initializeForms() {
 
 // Keyboard Shortcuts
 function initializeKeyboardShortcuts() {
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         // Ctrl/Cmd + S for save
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             const activeForm = document.querySelector('form:focus-within');
@@ -270,7 +270,7 @@ function initializeKeyboardShortcuts() {
                 activeForm.submit();
             }
         }
-        
+
         // Ctrl/Cmd + / for search
         if ((e.ctrlKey || e.metaKey) && e.key === '/') {
             e.preventDefault();
@@ -279,7 +279,7 @@ function initializeKeyboardShortcuts() {
                 searchInput.focus();
             }
         }
-        
+
         // ESC to clear search
         if (e.key === 'Escape') {
             const searchInput = document.querySelector('input[name="search"]:focus');
@@ -294,9 +294,9 @@ function initializeKeyboardShortcuts() {
 // Smooth Scrolling
 function initializeSmoothScrolling() {
     const links = document.querySelectorAll('a[href^="#"]');
-    
+
     links.forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', function (e) {
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
                 e.preventDefault();
@@ -313,31 +313,31 @@ function initializeSmoothScrolling() {
 function initializeChat() {
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
-    
+
     if (chatMessages) {
         // Auto-scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+
         // Scroll to bottom when new messages are added
         const observer = new MutationObserver(() => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
-        
+
         observer.observe(chatMessages, {
             childList: true,
             subtree: true
         });
     }
-    
+
     if (messageInput) {
         // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
+        messageInput.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
-        
+
         // Send with Ctrl+Enter
-        messageInput.addEventListener('keydown', function(e) {
+        messageInput.addEventListener('keydown', function (e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
                 this.closest('form').submit();
@@ -350,13 +350,13 @@ function initializeChat() {
 function initializeTooltips() {
     // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function(tooltipTriggerEl) {
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-    
+
     // Initialize Bootstrap popovers
     const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    popoverTriggerList.map(function(popoverTriggerEl) {
+    popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 }
@@ -364,13 +364,13 @@ function initializeTooltips() {
 // Image Preview
 function initializeImagePreview() {
     const imageInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
-    
+
     imageInputs.forEach(input => {
-        input.addEventListener('change', function(e) {
+        input.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     showImagePreview(e.target.result);
                 };
                 reader.readAsDataURL(file);
@@ -381,7 +381,7 @@ function initializeImagePreview() {
 
 function showImagePreview(src) {
     let preview = document.querySelector('.image-preview');
-    
+
     if (!preview) {
         preview = document.createElement('div');
         preview.className = 'image-preview mt-3';
@@ -395,13 +395,13 @@ function showImagePreview(src) {
                 </div>
             </div>
         `;
-        
+
         const fileInput = document.querySelector('input[type="file"]');
         if (fileInput) {
             fileInput.parentNode.appendChild(preview);
         }
     }
-    
+
     const img = preview.querySelector('img');
     img.src = src;
 }
@@ -414,7 +414,7 @@ function createProgressBar(container, progress = 0) {
     progressBar.innerHTML = `
         <div class="progress-bar" role="progressbar" style="width: ${progress}%"></div>
     `;
-    
+
     container.appendChild(progressBar);
     return progressBar;
 }
@@ -442,7 +442,7 @@ function debounce(func, wait, immediate) {
 
 function throttle(func, limit) {
     let inThrottle;
-    return function() {
+    return function () {
         const args = arguments;
         const context = this;
         if (!inThrottle) {
@@ -472,14 +472,14 @@ function fallbackCopyToClipboard(text) {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
         document.execCommand('copy');
         showNotification('Copied to clipboard', 'success');
     } catch (err) {
         showNotification('Failed to copy to clipboard', 'danger');
     }
-    
+
     document.body.removeChild(textArea);
 }
 
@@ -487,20 +487,20 @@ function fallbackCopyToClipboard(text) {
 function fadeIn(element, duration = 300) {
     element.style.opacity = '0';
     element.style.display = 'block';
-    
+
     const start = performance.now();
-    
+
     function animate(currentTime) {
         const elapsed = currentTime - start;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         element.style.opacity = progress;
-        
+
         if (progress < 1) {
             requestAnimationFrame(animate);
         }
     }
-    
+
     requestAnimationFrame(animate);
 }
 
@@ -508,16 +508,16 @@ function slideDown(element, duration = 300) {
     element.style.height = '0';
     element.style.overflow = 'hidden';
     element.style.display = 'block';
-    
+
     const targetHeight = element.scrollHeight;
     const start = performance.now();
-    
+
     function animate(currentTime) {
         const elapsed = currentTime - start;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         element.style.height = (targetHeight * progress) + 'px';
-        
+
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
@@ -525,12 +525,145 @@ function slideDown(element, duration = 300) {
             element.style.overflow = '';
         }
     }
-    
+
     requestAnimationFrame(animate);
 }
 
+// Mobile-specific enhancements
+function initializeMobileFeatures() {
+    // Prevent zoom on input focus (iOS)
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function () {
+            if (window.innerWidth <= 768) {
+                this.style.fontSize = '16px';
+            }
+        });
+
+        input.addEventListener('blur', function () {
+            this.style.fontSize = '';
+        });
+    });
+
+    // Touch-friendly navigation
+    const navLinks = document.querySelectorAll('.nav-link, .dropdown-item');
+    navLinks.forEach(link => {
+        link.addEventListener('touchstart', function () {
+            this.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+        });
+
+        link.addEventListener('touchend', function () {
+            setTimeout(() => {
+                this.style.backgroundColor = '';
+            }, 150);
+        });
+    });
+
+    // Swipe gestures for mobile
+    if ('ontouchstart' in window) {
+        initializeSwipeGestures();
+    }
+
+    // Mobile-specific button handling
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('touchstart', function () {
+            this.style.transform = 'scale(0.95)';
+        });
+
+        button.addEventListener('touchend', function () {
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+
+    // Mobile file upload enhancement
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function (e) {
+            if (e.target.files.length > 0) {
+                showMobileFilePreview(e.target.files[0]);
+            }
+        });
+    });
+}
+
+function initializeSwipeGestures() {
+    let startX, startY, endX, endY;
+    const threshold = 50;
+
+    document.addEventListener('touchstart', function (e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchend', function (e) {
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+
+        // Horizontal swipe
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+            if (deltaX > 0) {
+                // Swipe right - could be used for navigation
+                console.log('Swipe right detected');
+            } else {
+                // Swipe left - could be used for navigation
+                console.log('Swipe left detected');
+            }
+        }
+    });
+}
+
+function showMobileFilePreview(file) {
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const preview = document.createElement('div');
+            preview.className = 'mobile-file-preview glass-card p-3 mt-3';
+            preview.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <img src="${e.target.result}" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${file.name}</h6>
+                        <small class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.parentNode.appendChild(preview);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Mobile orientation handling
+function handleOrientationChange() {
+    if (window.innerWidth <= 768) {
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            if (window.orientation === 90 || window.orientation === -90) {
+                // Landscape
+                chatContainer.style.height = 'calc(100vh - 100px)';
+            } else {
+                // Portrait
+                chatContainer.style.height = 'calc(100vh - 140px)';
+            }
+        }
+    }
+}
+
 // Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeTheme();
     initializeFileUpload();
     initializeDragAndDrop();
@@ -542,17 +675,33 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeChat();
     initializeTooltips();
     initializeImagePreview();
-    
+    initializeMobileFeatures();
+
     // Add smooth transitions
     document.body.style.transition = 'all 0.3s ease';
-    
+
     // Load theme from localStorage if available
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme && savedTheme !== document.documentElement.getAttribute('data-theme')) {
         toggleTheme();
     }
-    
-    console.log('File Drive initialized successfully');
+
+    // Handle orientation changes
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+
+    console.log('File Drive initialized successfully with mobile support');
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
 });
 
 // Add CSS animations

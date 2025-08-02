@@ -63,6 +63,13 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
+@app.route('/mobile')
+def mobile_home():
+    """Mobile-optimized home page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return render_template('mobile_index.html')
+
 @app.route('/demo')
 def demo_dashboard():
     """Demo route to showcase the UI without authentication"""
