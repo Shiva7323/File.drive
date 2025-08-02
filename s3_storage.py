@@ -16,12 +16,19 @@ class S3Storage:
         
         # Initialize S3 client
         try:
-            self.s3_client = boto3.client(
-                's3',
-                aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-                aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
-                region_name=self.region_name
-            )
+            # Only initialize if AWS credentials are provided
+            aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+            aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+            
+            if aws_access_key and aws_secret_key:
+                self.s3_client = boto3.client(
+                    's3',
+                    aws_access_key_id=aws_access_key,
+                    aws_secret_access_key=aws_secret_key,
+                    region_name=self.region_name
+                )
+            else:
+                self.s3_client = None
         except Exception:
             self.s3_client = None
     
